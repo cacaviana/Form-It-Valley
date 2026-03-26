@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Build
         working-directory: frontend
@@ -31,8 +31,7 @@ jobs:
         working-directory: frontend
         run: |
           cp package.json build/
-          cp package-lock.json build/ 2>/dev/null || true
-          cd build && npm ci --omit=dev
+          cd build && npm install --omit=dev
 
       - name: Deploy to Azure
         uses: azure/webapps-deploy@v3
