@@ -267,7 +267,7 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
   <!-- Header -->
   <header class="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between z-10">
     <div class="flex items-center gap-3">
-      <button onclick={() => goto('/admin/flows')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
+      <button onclick={() => goto('/admin/scheduling')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>

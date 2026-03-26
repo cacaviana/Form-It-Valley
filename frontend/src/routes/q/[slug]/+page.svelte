@@ -93,6 +93,9 @@
         phase = 'scheduling';
         schedulingStep = 'calendar';
         loadAvailableDates(calMonth + 1, calYear);
+      } else if (currentNode.data.endType === 'message') {
+        phase = 'end';
+        resultType = 'message';
       } else {
         phase = 'end';
         submitToBackend();
@@ -301,7 +304,7 @@
     {#if loading}
       <div class="p-16 text-center">
         <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-        <p class="text-sm text-gray-500">Chargement...</p>
+        <p class="text-sm text-gray-500">Carregando...</p>
       </div>
 
     {:else if error}
@@ -310,11 +313,11 @@
     {:else if phase === 'form'}
       <div class="p-8">
         <h2 class="text-2xl font-semibold text-gray-900 mb-2">{flow?.name}</h2>
-        <p class="text-base text-gray-500 mb-8">Obtenez votre devis en quelques minutes</p>
+        <p class="text-base text-gray-500 mb-8">Preencha seus dados para agendar</p>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1.5">Nom *</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Nome completo *</label>
             <input type="text" bind:value={clientData.name} class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" />
           </div>
           <div>
@@ -322,11 +325,11 @@
             <input type="email" bind:value={clientData.email} class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1.5">Téléphone</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">WhatsApp</label>
             <input type="tel" bind:value={clientData.phone} class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1.5">Adresse</label>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">Endereco</label>
             <input type="text" bind:value={clientData.address} class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" />
           </div>
           <button
@@ -334,7 +337,7 @@
             disabled={!clientData.name.trim() || !clientData.email.trim()}
             class="w-full bg-blue-600 text-white py-3.5 rounded-xl text-base font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors mt-3"
           >
-            Commencer
+            Comecar
           </button>
         </div>
       </div>
@@ -342,7 +345,7 @@
     {:else if phase === 'questions' && currentNode}
       <!-- Progress -->
       <div class="bg-gray-50 px-6 py-3.5 flex items-center justify-between border-b border-gray-100">
-        <span class="text-sm font-medium text-gray-500">Question {answeredCount + 1} / {totalQuestions}</span>
+        <span class="text-sm font-medium text-gray-500">Pergunta {answeredCount + 1} / {totalQuestions}</span>
         <div class="flex items-center gap-2">
           <div class="w-28 bg-gray-200 rounded-full h-2">
             <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: {progressPercent}%"></div>
@@ -388,13 +391,13 @@
                 onclick={() => selectAnswer('Oui', 'yes')}
                 class="border-2 border-gray-200 rounded-xl px-4 py-5 text-center text-lg font-medium hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer"
               >
-                Oui
+                Sim
               </button>
               <button
                 onclick={() => selectAnswer('Non', 'no')}
                 class="border-2 border-gray-200 rounded-xl px-4 py-5 text-center text-lg font-medium hover:border-red-400 hover:bg-red-50 transition-all cursor-pointer"
               >
-                Non
+                Nao
               </button>
             </div>
           {:else if currentNode.data.questionType === 'number'}
@@ -403,14 +406,14 @@
                 type="number"
                 bind:value={inputValue}
                 class="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Entrez un nombre"
+                placeholder="Digite um numero"
               />
               <button
                 onclick={() => { selectAnswer(inputValue); inputValue = ''; }}
                 disabled={!inputValue}
                 class="bg-blue-600 text-white px-6 py-3 rounded-xl text-base font-medium hover:bg-blue-700 disabled:opacity-40 cursor-pointer transition-colors"
               >
-                Suivant
+                Proximo
               </button>
             </div>
           {:else}
@@ -419,14 +422,14 @@
                 type="text"
                 bind:value={inputValue}
                 class="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Votre réponse"
+                placeholder="Sua resposta"
               />
               <button
                 onclick={() => { selectAnswer(inputValue); inputValue = ''; }}
                 disabled={!inputValue.trim()}
                 class="bg-blue-600 text-white px-6 py-3 rounded-xl text-base font-medium hover:bg-blue-700 disabled:opacity-40 cursor-pointer transition-colors"
               >
-                Suivant
+                Proximo
               </button>
             </div>
           {/if}
@@ -439,7 +442,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>
-          Retour
+          Voltar
         </button>
       </div>
 
@@ -449,8 +452,8 @@
         <div class="p-8">
           <div class="text-center py-8">
             <div class="w-12 h-12 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-5"></div>
-            <p class="text-base text-gray-800 font-semibold">Generation de votre devis...</p>
-            <p class="text-sm text-gray-400 mt-2">Notre IA analyse vos besoins et calcule le meilleur prix</p>
+            <p class="text-base text-gray-800 font-semibold">Processando suas respostas...</p>
+            <p class="text-sm text-gray-400 mt-2">Aguarde um momento</p>
           </div>
         </div>
 
@@ -464,7 +467,7 @@
           <h3 class="text-xl font-bold text-gray-900 mb-3">{endNode.data.title}</h3>
           <p class="text-base text-gray-600 mb-5">{endNode.data.message}</p>
           <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700">
-            Vos données ont été enregistrées. Nous vous contacterons sous 24h.
+            Seus dados foram registrados. Entraremos em contato em ate 24h.
           </div>
         </div>
 
@@ -475,8 +478,8 @@
           <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-5">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-bold">Devis estimatif</h3>
-                <p class="text-blue-200 text-xs mt-0.5">Total Electrique</p>
+                <h3 class="text-lg font-bold">Resumo</h3>
+                <p class="text-blue-200 text-xs mt-0.5">IT Valley</p>
               </div>
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -589,9 +592,20 @@
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-gray-900">Votre devis est pret!</h3>
+            <h3 class="text-lg font-bold text-gray-900">Sua solicitacao foi registrada!</h3>
           </div>
           <pre class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs whitespace-pre-wrap font-mono text-gray-700 max-h-80 overflow-y-auto">{resultText}</pre>
+        </div>
+
+      {:else if resultType === 'message'}
+        <div class="p-8 text-center">
+          <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
+          <p class="text-sm text-gray-600">{endNode.data.message}</p>
         </div>
 
       {:else}
@@ -602,7 +616,7 @@
             </svg>
           </div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
-          <p class="text-sm text-gray-600">Merci pour vos reponses!</p>
+          <p class="text-sm text-gray-600">Obrigado pelas suas respostas!</p>
           {#if resultText}
             <p class="text-sm text-gray-500 mt-3">{resultText}</p>
           {/if}
@@ -680,7 +694,7 @@
 
           <button onclick={goBack} class="mt-4 text-xs text-gray-400 hover:text-gray-600 cursor-pointer transition-colors flex items-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-            Retour
+            Voltar
           </button>
         </div>
 

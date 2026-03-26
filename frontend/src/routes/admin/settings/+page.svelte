@@ -49,7 +49,7 @@
 <div class="min-h-screen bg-gray-50">
   <header class="bg-white border-b px-6 py-4 flex items-center gap-3">
     <button
-      onclick={() => goto('/admin/flows')}
+      onclick={() => goto('/admin/scheduling')}
       class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1"
       title="Retour"
     >
@@ -59,24 +59,24 @@
     </button>
     <div class="h-5 w-px bg-gray-200"></div>
     <div>
-      <h1 class="text-xl font-bold text-gray-900">FlowQuote</h1>
-      <p class="text-sm text-gray-500">Paramètres IA</p>
+      <h1 class="text-xl font-bold text-gray-900">Form IT Valley</h1>
+      <p class="text-sm text-gray-500">Configuracoes de IA</p>
     </div>
   </header>
 
   <main class="max-w-lg mx-auto p-6">
     {#if loading}
-      <div class="text-center py-12 text-gray-500">Chargement...</div>
+      <div class="text-center py-12 text-gray-500">Carregando...</div>
     {:else}
       <div class="bg-white rounded-xl border p-6 space-y-6">
         <div>
-          <h2 class="text-base font-semibold text-gray-900 mb-1">Modèle IA</h2>
-          <p class="text-sm text-gray-500">Choisissez le fournisseur et le modèle utilisé pour générer les devis.</p>
+          <h2 class="text-base font-semibold text-gray-900 mb-1">Modelo de IA</h2>
+          <p class="text-sm text-gray-500">Escolha o provedor e o modelo utilizado.</p>
         </div>
 
         <!-- Provider selector -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Fournisseur</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Provedor</label>
           <div class="grid grid-cols-2 gap-3">
             {#each Object.keys(availableModels) as p}
               <button
@@ -106,7 +106,7 @@
 
         <!-- Model selector -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Modèle</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
           <div class="space-y-2">
             {#each (availableModels[provider] ?? []) as m}
               <button
@@ -137,10 +137,10 @@
             disabled={saving}
             class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer transition-colors"
           >
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
           {#if saved}
-            <span class="text-sm text-green-600 font-medium">Enregistré ! Le prochain devis utilisera ce modèle.</span>
+            <span class="text-sm text-green-600 font-medium">Salvo!</span>
           {/if}
         </div>
       </div>

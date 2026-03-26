@@ -131,15 +131,15 @@
   <!-- Header admin do preview -->
   <header class="bg-white border-b px-6 py-3 flex items-center justify-between z-10">
     <div class="flex items-center gap-3">
-      <button onclick={() => goto('/admin/flows')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
+      <button onclick={() => goto('/admin/scheduling')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>
       </button>
       <div class="h-5 w-px bg-gray-200"></div>
       <div>
-        <h1 class="text-sm font-bold text-gray-900">Preview: {flow?.name || '...'}</h1>
-        <p class="text-xs text-gray-500">Simulação do questionário — como o cliente vai ver</p>
+        <h1 class="text-sm font-bold text-gray-900">Previa: {flow?.name || '...'}</h1>
+        <p class="text-xs text-gray-500">Simulacao do formulario — como o lead vai ver</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -150,7 +150,7 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
         </svg>
-        Recomeçar
+        Reiniciar
       </button>
       <button
         onclick={() => goto(`/admin/flows/${page.params.id}/edit`)}
@@ -159,7 +159,7 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
         </svg>
-        Editar fluxo
+        Editar formulario
       </button>
       {#if flow?.slug}
         <a
