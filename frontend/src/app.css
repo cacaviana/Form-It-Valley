@@ -1,0 +1,75 @@
+@import 'tailwindcss';
+@import '@xyflow/svelte/dist/style.css';
+
+/* ══════════════════════════════════════════════════════════
+   Petra IA Design System — FlowQuote Theme
+   ══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap');
+
+@theme {
+  /* ── Petra Brand Blues ── */
+  --color-petra-navy: #0D2033;
+  --color-petra-dark: #173650;
+  --color-petra-mid: #265A87;
+  --color-petra-steel: #3578B0;
+  --color-petra-light: #68A0CC;
+  --color-petra-pale: #A5C8E4;
+  --color-petra-ghost: #D2E7F5;
+
+  /* ── Map to Tailwind primary ── */
+  --color-primary-50: #D2E7F5;
+  --color-primary-100: #A5C8E4;
+  --color-primary-200: #68A0CC;
+  --color-primary-300: #3578B0;
+  --color-primary-400: #265A87;
+  --color-primary-500: #3578B0;
+  --color-primary-600: #265A87;
+  --color-primary-700: #173650;
+  --color-primary-800: #0D2033;
+  --color-primary-900: #091a29;
+
+  /* ── Teal-green surfaces ── */
+  --color-surface-page: #E6EEEC;
+  --color-surface-section: #DAE6E2;
+  --color-surface-card: #EEF5F2;
+  --color-surface-card-alt: #F2F8F5;
+  --color-surface-teal: #C8DDD7;
+
+  /* ── Greens (for scheduling/success) ── */
+  --color-green-50: #EEF5F2;
+  --color-green-100: #DAE6E2;
+  --color-green-200: #C8DDD7;
+  --color-green-300: #6EAB97;
+  --color-green-400: #4A9A7F;
+  --color-green-500: #1E6B58;
+  --color-green-600: #165A49;
+  --color-green-700: #0F4939;
+
+  /* ── Font ── */
+  --font-sans: 'Outfit', 'Helvetica Neue', system-ui, sans-serif;
+}
+
+:root {
+  /* Flow editor node colors */
+  --color-start: #1E6B58;
+  --color-question: #3578B0;
+  --color-condition: #eab308;
+  --color-specialist: #B83232;
+  --color-quote: #6B4FC4;
+  --color-message: #5B8A7A;
+}
+
+@layer base {
+  body {
+    @apply bg-surface-page text-petra-navy font-sans antialiased;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* ── Scrollbar styling ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(38,90,135,0.2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(38,90,135,0.35); }
+}
