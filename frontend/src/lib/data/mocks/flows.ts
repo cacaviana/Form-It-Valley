@@ -46,7 +46,7 @@ export const flowsMock: Flow[] = [
         position: { x: 650, y: 140 },
         data: {
           title: 'Région non desservie',
-          endType: 'specialist',
+          endType: 'finish',
           message: "Malheureusement, nous ne desservons pas votre région pour le moment. Un spécialiste vous contactera sous 24h pour évaluer les options disponibles."
         }
       },
@@ -119,7 +119,7 @@ export const flowsMock: Flow[] = [
         position: { x: 650, y: 700 },
         data: {
           title: 'Panneau plein',
-          endType: 'specialist',
+          endType: 'finish',
           message: "Votre panneau électrique n'a pas d'espace disponible. Un technicien doit évaluer les options (ajout de sous-panneau ou mise à jour). Nous vous contacterons sous 24h."
         }
       },
@@ -211,7 +211,7 @@ export const flowsMock: Flow[] = [
         position: { x: 650, y: 1540 },
         data: {
           title: 'Installation intérieure',
-          endType: 'specialist',
+          endType: 'finish',
           message: "L'installation intérieure est plus complexe et nécessite une évaluation sur place. Un technicien vous contactera sous 24h pour planifier une visite."
         }
       },
@@ -236,7 +236,7 @@ export const flowsMock: Flow[] = [
         position: { x: 300, y: 1900 },
         data: {
           title: 'Générer le devis',
-          endType: 'quote',
+          endType: 'finish',
           businessContext: "Nous sommes Total Électrique, entreprise spécialisée dans l'installation de bornes de recharge pour véhicules électriques au Québec.\n\nPrix de base:\n- Borne 16A: 499$\n- Borne 32A: 699$\n- Borne 40A: 899$\n- Borne 48A: 1 099$\n- Controller de charge DCC-9: 699$\n- Installation mur extérieur: 490$\n- Installation poteau: 690$\n- Câblage: 9$/pied\n- Déplacement: 69$\n\nRecommandation de borne:\n- Panneau 60A → Borne 16A + Controller obligatoire\n- Panneau 100A sans spa → 16A direct ou 32A + Controller\n- Panneau 100A avec spa → 16A + Controller ou upgrade panneau\n- Panneau 150A sans spa → jusqu'à 40A direct\n- Panneau 150A avec spa → Controller obligatoire ou upgrade 200A\n- Panneau 200A sans spa → jusqu'à 60A direct\n- Panneau 200A avec spa → 32A direct ou 48A+ avec Controller\n- Panneau 320A/400A → jusqu'à 60-100A direct",
           aiInstruction: "Génère un devis professionnel en français canadien. Détaille chaque ligne (borne recommandée, installation, câblage, déplacement, controller si nécessaire). Affiche sous-totaux et total final en dollars canadiens. Inclus des recommandations techniques basées sur l'ampérage du panneau, la présence de spa, et la borne existante.",
           outputFormat: 'both'

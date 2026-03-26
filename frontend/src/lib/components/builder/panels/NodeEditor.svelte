@@ -12,6 +12,58 @@
 
   let data = $derived(node.data as FlowNodeData);
 
+  // WhatsApp templates
+  let waTemplates = $state<{ name: string; body: string; variableCount: number; category: string }[]>([]);
+  let loadingTemplates = $state(false);
+  let selectedTemplate = $derived(waTemplates.find(t => t.name === data.whatsappTemplate));
+
+  async function loadTemplates() {
+    if (waTemplates.length > 0) return;
+    loadingTemplates = true;
+    try {
+      const res = await fetch('/api/whatsapp-templates');
+      if (res.ok) waTemplates = await res.json();
+    } catch (e) { /* silent */ }
+    loadingTemplates = false;
+  }
+
+  // Carrega templates quando end type for scheduling
+  $effect(() => {
+    if (node.type === 'end' && data.endType === 'scheduling') {
+      loadTemplates();
+    }
+  });
+
+  const placeholderOptions = [
+    { value: '{{nome}}', label: 'Nome do lead' },
+    { value: '{{data}}', label: 'Data do agendamento' },
+    { value: '{{horario}}', label: 'Horario do agendamento' },
+    { value: '{{link}}', label: 'Link do Google Calendar' },
+    { value: '{{email}}', label: 'E-mail do lead' },
+    { value: '{{telefone}}', label: 'Telefone do lead' }
+  ];
+
+  function updateVariable(index: number, value: string) {
+    const vars = [...(data.whatsappVariables || [])];
+    vars[index] = value;
+    onUpdate({ whatsappVariables: vars });
+  }
+
+  function onTemplateChange(templateName: string) {
+    const tpl = waTemplates.find(t => t.name === templateName);
+    // Inicializa variaveis com placeholders padrao
+    const vars: string[] = [];
+    if (tpl) {
+      for (let i = 0; i < tpl.variableCount; i++) {
+        if (i === 0) vars.push('{{nome}}');
+        else if (i === 1) vars.push('Seu atendimento na IT Valley foi confirmado! Data: {{data}} - Horario: {{horario}}');
+        else if (i === 2) vars.push('Link da reuniao: {{link}}');
+        else vars.push('');
+      }
+    }
+    onUpdate({ whatsappTemplate: templateName, whatsappVariables: vars });
+  }
+
   const questionTypes: { value: QuestionType; label: string; hint: string }[] = [
     { value: 'single_choice', label: 'Choix unique', hint: 'Le client choisit 1 option (chaque option devient une sortie du flux)' },
     { value: 'yes_no', label: 'Oui / Non', hint: '2 sorties : Oui ou Non — idéal pour les bifurcations' },
@@ -24,10 +76,8 @@
   ];
 
   const endTypes = [
-    { value: 'quote', label: 'Générer devis (IA)' },
-    { value: 'specialist', label: 'Contact spécialiste' },
-    { value: 'thank_you', label: 'Remerciement' },
-    { value: 'scheduling', label: 'Rendez-vous (Calendrier)' }
+    { value: 'scheduling', label: 'Agendar Atendimento' },
+    { value: 'finish', label: 'Finalizar' }
   ];
 
   // Which question types have individual option handles (branching)
@@ -335,10 +385,10 @@
     <!-- ==================== END ==================== -->
     {#if node.type === 'end'}
       <div>
-        <label class="label">Type de finalisation</label>
+        <label class="label">Tipo de finalizacao</label>
         <select
-          value={data.endType || 'quote'}
-          onchange={(e) => onUpdate({ endType: (e.target as HTMLSelectElement).value as 'quote' | 'specialist' | 'thank_you' | 'scheduling' })}
+          value={data.endType || 'finish'}
+          onchange={(e) => onUpdate({ endType: (e.target as HTMLSelectElement).value as 'scheduling' | 'finish' })}
           class="input"
         >
           {#each endTypes as et}
@@ -347,68 +397,6 @@
         </select>
       </div>
 
-      {#if data.endType === 'quote'}
-        <!-- Tabela de preços -->
-        <div>
-          <div class="flex items-center gap-1.5 mb-1">
-            <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <label class="label !mb-0">Tableau de prix</label>
-          </div>
-          <textarea
-            value={data.businessContext || ''}
-            oninput={(e) => onUpdate({ businessContext: (e.target as HTMLTextAreaElement).value })}
-            class="input h-36 resize-y font-mono text-xs"
-            placeholder={"Ex:\nBorne 32A Level 2: $699\nInstallation murale: $250\nCâblage (25-50 pieds): +$150\nUpgrade panneau 100A→200A: $1,800"}
-          ></textarea>
-          <p class="text-xs text-gray-400 mt-1">Listez tous les produits et prix. L'IA utilise ce tableau pour calculer le devis.</p>
-        </div>
-
-        <!-- Regras de negócio -->
-        <div>
-          <div class="flex items-center gap-1.5 mb-1">
-            <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            <label class="label !mb-0">Règles d'affaires</label>
-          </div>
-          <textarea
-            value={data.aiInstruction || ''}
-            oninput={(e) => onUpdate({ aiInstruction: (e.target as HTMLTextAreaElement).value })}
-            class="input h-28 resize-y text-xs"
-            placeholder={"Ex:\n- Si panneau 100A et pas d'espaces libres → inclure upgrade 100A→200A ($1,800)\n- Borne Level 2 → appliquer subvention Roulez Vert (-$600)\n- Câblage: ajouter 15 pieds à la distance indiquée\n- Toujours inclure TPS (5%) et TVQ (9.975%)"}
-          ></textarea>
-          <p class="text-xs text-gray-400 mt-1">Indiquez quand appliquer chaque prix. Plus c'est clair, meilleur sera le devis.</p>
-        </div>
-
-        <!-- Aviso IA -->
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <div class="flex gap-2">
-            <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-            </svg>
-            <div>
-              <p class="text-xs font-semibold text-amber-800">Règles claires = devis précis</p>
-              <p class="text-xs text-amber-700 mt-1">Sans règles, l'IA peut oublier des articles ou se tromper dans les calculs. Décrivez les conditions de chaque prix.</p>
-              <p class="text-xs text-amber-600 mt-1.5 italic">Même ainsi, les IAs peuvent se tromper. Vérifiez toujours le devis avant de l'envoyer au client.</p>
-            </div>
-          </div>
-        </div>
-      {/if}
-
-      {#if data.endType === 'specialist'}
-        <div>
-          <label class="label">Message au client</label>
-          <textarea
-            value={data.message || ''}
-            oninput={(e) => onUpdate({ message: (e.target as HTMLTextAreaElement).value })}
-            class="input h-20 resize-y"
-            placeholder="Ex : Un spécialiste vous contactera sous 24h..."
-          ></textarea>
-        </div>
-      {/if}
-
       {#if data.endType === 'scheduling'}
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div class="flex gap-2">
@@ -416,18 +404,106 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
             </svg>
             <div>
-              <p class="text-xs font-semibold text-blue-800">Mode Rendez-vous</p>
-              <p class="text-xs text-blue-700 mt-1">Le client choisit date et heure sur le calendrier. Le rendez-vous est créé dans Google Calendar et envoyé via webhook (WhatsApp).</p>
+              <p class="text-xs font-semibold text-blue-800">Agendar Atendimento</p>
+              <p class="text-xs text-blue-700 mt-1">O lead escolhe data e horario no calendario. O agendamento e criado no Google Calendar, e o lead recebe um e-mail com o link da call e uma mensagem no WhatsApp.</p>
             </div>
           </div>
         </div>
         <div>
-          <label class="label">Message de confirmation</label>
+          <label class="label">Mensagem de confirmacao</label>
           <textarea
             value={data.message || ''}
             oninput={(e) => onUpdate({ message: (e.target as HTMLTextAreaElement).value })}
             class="input h-20 resize-y"
-            placeholder="Ex : Choisissez le meilleur jour et heure pour notre conversation..."
+            placeholder="Ex: Escolha o melhor dia e horario para nossa conversa..."
+          ></textarea>
+        </div>
+
+        <!-- WhatsApp Template Config -->
+        <div class="border-t border-gray-200 pt-4 mt-2">
+          <div class="flex items-center gap-1.5 mb-3">
+            <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.75.75 0 00.917.918l4.462-1.494A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.337 0-4.542-.664-6.407-1.813l-.456-.276-2.653.888.889-2.651-.277-.458A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+            <label class="label !mb-0">Template WhatsApp</label>
+          </div>
+
+          {#if loadingTemplates}
+            <div class="text-xs text-gray-400 py-2">Carregando templates...</div>
+          {:else if waTemplates.length === 0}
+            <div class="text-xs text-gray-400 py-2">Nenhum template disponivel</div>
+          {:else}
+            <select
+              value={data.whatsappTemplate || ''}
+              onchange={(e) => onTemplateChange((e.target as HTMLSelectElement).value)}
+              class="input mb-2"
+            >
+              <option value="">Selecione um template</option>
+              {#each waTemplates as tpl}
+                <option value={tpl.name}>{tpl.name} ({tpl.variableCount} vars)</option>
+              {/each}
+            </select>
+
+            {#if selectedTemplate}
+              <!-- Preview do template -->
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Preview</p>
+                <p class="text-xs text-gray-700 whitespace-pre-wrap">{selectedTemplate.body}</p>
+              </div>
+
+              <!-- Variaveis -->
+              {#if selectedTemplate.variableCount > 0}
+                <div class="space-y-2">
+                  <p class="text-xs font-semibold text-gray-500 uppercase">Variaveis</p>
+                  <div class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-1">
+                    <p class="text-xs text-blue-700">Placeholders disponiveis:</p>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      {#each placeholderOptions as ph}
+                        <span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">{ph.value}</span>
+                      {/each}
+                    </div>
+                  </div>
+                  {#each Array(selectedTemplate.variableCount) as _, i}
+                    <div>
+                      <label class="text-xs text-gray-500 mb-0.5 block">
+                        {`{{${i + 1}}}`}
+                      </label>
+                      <input
+                        type="text"
+                        value={(data.whatsappVariables || [])[i] || ''}
+                        oninput={(e) => updateVariable(i, (e.target as HTMLInputElement).value)}
+                        class="input !py-1.5 text-xs font-mono"
+                        placeholder="Ex: {{nome}}"
+                      />
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            {/if}
+          {/if}
+        </div>
+      {/if}
+
+      {#if data.endType === 'finish'}
+        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div class="flex gap-2">
+            <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-xs font-semibold text-green-800">Finalizar</p>
+              <p class="text-xs text-green-700 mt-1">O lead vera uma mensagem de agradecimento ao final do formulario.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="label">Mensagem final</label>
+          <textarea
+            value={data.message || ''}
+            oninput={(e) => onUpdate({ message: (e.target as HTMLTextAreaElement).value })}
+            class="input h-20 resize-y"
+            placeholder="Ex: Obrigado pelas suas respostas! Entraremos em contato em breve."
           ></textarea>
         </div>
       {/if}

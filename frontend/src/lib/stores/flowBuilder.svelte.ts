@@ -46,10 +46,8 @@ const defaultDataByType: Record<NodeType, () => FlowNodeData> = {
   }),
   end: () => ({
     title: 'Fim',
-    endType: 'quote',
-    businessContext: '',
-    aiInstruction: '',
-    outputFormat: 'pdf'
+    endType: 'finish',
+    message: ''
   })
 };
 

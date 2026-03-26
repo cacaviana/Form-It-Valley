@@ -60,9 +60,6 @@
       }, 2500);
     } else if (currentNode.type === 'end') {
       endNode = currentNode;
-      if (currentNode.data.endType === 'quote') {
-        generateQuote();
-      }
       phase = 'end';
     }
   }
@@ -112,19 +109,6 @@
     inputValue = '';
   }
 
-  function generateQuote() {
-    let text = '=== DEVIS ESTIMATIF ===\n\n';
-    text += `Client: ${clientData.name}\n`;
-    text += `Email: ${clientData.email}\n`;
-    if (clientData.phone) text += `Tél: ${clientData.phone}\n`;
-    if (clientData.address) text += `Adresse: ${clientData.address}\n`;
-    text += '\n--- Réponses ---\n\n';
-    for (const a of answers) {
-      text += `${a.question}: ${a.value}\n`;
-    }
-    text += '\n(Devis IA sera disponible prochainement)';
-    resultText = text;
-  }
 </script>
 
 <div class="min-h-screen bg-gray-100 flex flex-col">
@@ -284,29 +268,19 @@
 
         {:else if phase === 'end' && endNode}
           <div class="p-8">
-            {#if endNode.data.endType === 'specialist'}
+            {#if endNode.data.endType === 'scheduling'}
               <div class="text-center">
-                <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                  <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                   </svg>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
-                <p class="text-sm text-gray-600 mb-4">{endNode.data.message}</p>
-                <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700">
-                  Vos données ont été enregistrées. Nous vous contacterons sous 24h.
+                <p class="text-sm text-gray-600 mb-2">{endNode.data.message || 'Aqui o lead vera o calendario para agendar.'}</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+                  (Preview) O calendario de agendamento aparecera aqui no formulario real.
                 </div>
               </div>
-            {:else if endNode.data.endType === 'quote'}
-              <div class="text-center mb-5">
-                <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-3">
-                  <svg class="w-7 h-7 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900">Votre devis est prêt!</h3>
-              </div>
-              <pre class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs whitespace-pre-wrap font-mono text-gray-700 max-h-80 overflow-y-auto">{resultText}</pre>
             {:else}
               <div class="text-center">
                 <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
@@ -315,7 +289,7 @@
                   </svg>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
-                <p class="text-sm text-gray-600">Merci pour vos réponses!</p>
+                <p class="text-sm text-gray-600">{endNode.data.message || 'Obrigado pelas suas respostas!'}</p>
               </div>
             {/if}
           </div>

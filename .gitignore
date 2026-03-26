@@ -5,3 +5,8 @@ test-results/
 *.env
 .env.*
 !.env.example
+sigma-freedom-*.json
+googleCalendar*.txt
+frontend/deploy/
+frontend/deploy.zip
+frontend/build/

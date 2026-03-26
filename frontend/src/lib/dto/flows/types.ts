@@ -37,10 +37,13 @@ export interface FlowNodeData {
   message?: string;
   isSpecialist?: boolean;
   // End node
-  endType?: 'quote' | 'specialist' | 'thank_you' | 'scheduling';
+  endType?: 'scheduling' | 'finish';
   businessContext?: string;
   aiInstruction?: string;
   outputFormat?: 'pdf' | 'txt' | 'both';
+  // WhatsApp template config (scheduling)
+  whatsappTemplate?: string;
+  whatsappVariables?: string[]; // cada variavel pode usar placeholders: {{nome}}, {{data}}, {{horario}}, {{link}}
 }
 
 export interface FlowNode {

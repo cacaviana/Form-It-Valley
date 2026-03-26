@@ -3,17 +3,15 @@ import { env } from '$env/dynamic/private';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
-function getCalendarService() {
+function getCalendarClient() {
 	const jsonStr = env.GOOGLE_SERVICE_ACCOUNT_JSON;
 	if (!jsonStr) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not set');
 
 	const credentials = JSON.parse(jsonStr);
-	const auth = new google.auth.JWT(
-		credentials.client_email,
-		undefined,
-		credentials.private_key,
-		SCOPES
-	);
+	const auth = new google.auth.GoogleAuth({
+		credentials,
+		scopes: SCOPES
+	});
 
 	return google.calendar({ version: 'v3', auth });
 }
@@ -30,7 +28,7 @@ export async function getAvailableSlots(dateStr: string): Promise<string[]> {
 	];
 
 	try {
-		const calendar = getCalendarService();
+		const calendar = getCalendarClient();
 		const calId = getCalendarId();
 
 		const res = await calendar.events.list({
@@ -50,7 +48,6 @@ export async function getAvailableSlots(dateStr: string): Promise<string[]> {
 			const start = event.start?.dateTime;
 			const end = event.end?.dateTime;
 			if (start && end) {
-				// Extract HH:MM from ISO datetime
 				const startTime = new Date(start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Sao_Paulo' });
 				const endTime = new Date(end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Sao_Paulo' });
 				busy.push({ start: startTime, end: endTime });
@@ -69,20 +66,19 @@ export async function getAvailableSlots(dateStr: string): Promise<string[]> {
 		});
 	} catch (e) {
 		console.error('[GCal] Error getting slots:', e);
-		// Fallback to all slots on error
 		return ALL_SLOTS;
 	}
 }
 
 /** Get available dates for a month (checking Google Calendar) */
 export async function getAvailableDates(month: number, year: number): Promise<{ date: string; available: boolean; slots_count: number }[]> {
-	const ALL_SLOTS_COUNT = 14; // total possible slots per day
+	const ALL_SLOTS_COUNT = 14;
 	const daysInMonth = new Date(year, month, 0).getDate();
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
 
 	try {
-		const calendar = getCalendarService();
+		const calendar = getCalendarClient();
 		const calId = getCalendarId();
 
 		const startDate = `${year}-${String(month).padStart(2, '0')}-01T00:00:00-03:00`;
@@ -99,7 +95,6 @@ export async function getAvailableDates(month: number, year: number): Promise<{ 
 
 		const events = res.data.items || [];
 
-		// Count events per day
 		const eventsPerDay: Record<string, number> = {};
 		for (const event of events) {
 			const start = event.start?.dateTime || event.start?.date;
@@ -127,7 +122,6 @@ export async function getAvailableDates(month: number, year: number): Promise<{ 
 		return dates;
 	} catch (e) {
 		console.error('[GCal] Error getting dates:', e);
-		// Fallback: return weekdays as available
 		const dates = [];
 		for (let day = 1; day <= daysInMonth; day++) {
 			const d = new Date(year, month - 1, day);
@@ -149,7 +143,7 @@ export async function createCalendarEvent(data: {
 	scheduledTime: string;
 }): Promise<{ eventId: string; htmlLink: string } | null> {
 	try {
-		const calendar = getCalendarService();
+		const calendar = getCalendarClient();
 		const calId = getCalendarId();
 
 		const [h, m] = data.scheduledTime.split(':').map(Number);
@@ -164,7 +158,7 @@ export async function createCalendarEvent(data: {
 				`Email: ${data.leadEmail}`,
 				`Telefone: ${data.leadPhone || 'N/A'}`,
 				``,
-				`Agendado via FlowQuote`
+				`Agendado via FormItValley`
 			].join('\n'),
 			start: {
 				dateTime: `${data.scheduledDate}T${data.scheduledTime}:00`,
@@ -174,11 +168,9 @@ export async function createCalendarEvent(data: {
 				dateTime: `${data.scheduledDate}T${endTime}:00`,
 				timeZone: 'America/Sao_Paulo'
 			},
-			attendees: [{ email: data.leadEmail }],
 			reminders: {
 				useDefault: false,
 				overrides: [
-					{ method: 'email', minutes: 60 },
 					{ method: 'popup', minutes: 30 }
 				]
 			}
@@ -186,9 +178,10 @@ export async function createCalendarEvent(data: {
 
 		const res = await calendar.events.insert({
 			calendarId: calId,
-			requestBody: event,
-			sendUpdates: 'all'
+			requestBody: event
 		});
+
+		console.log(`[GCal] Evento criado: ${res.data.id}`);
 
 		return {
 			eventId: res.data.id || '',

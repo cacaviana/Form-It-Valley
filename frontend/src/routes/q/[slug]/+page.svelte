@@ -31,20 +31,9 @@
   let calYear = $state(new Date().getFullYear());
   let loadingDates = $state(false);
   let loadingSlots = $state(false);
-  let schedulingResult = $state<{ message: string } | null>(null);
+  let schedulingResult = $state<{ message: string; gcal_event_link?: string; whatsapp_sent?: boolean } | null>(null);
 
-  // Quote result
-  let quoteData = $state<{
-    items: { description: string; unit_price: number; quantity: number; subtotal: number }[];
-    subtotal: number;
-    taxes_tps: number;
-    taxes_tvq: number;
-    total: number;
-    recommendations: string;
-    notes: string;
-  } | null>(null);
   let resultText = $state('');
-  let resultType = $state<'quote' | 'fallback' | 'error' | ''>('');
 
   let currentNode = $derived(flow?.nodes.find(n => n.id === currentNodeId) || null);
   let totalQuestions = $derived(flow?.nodes.filter(n => n.type === 'question').length || 0);
@@ -93,9 +82,6 @@
         phase = 'scheduling';
         schedulingStep = 'calendar';
         loadAvailableDates(calMonth + 1, calYear);
-      } else if (currentNode.data.endType === 'message') {
-        phase = 'end';
-        resultType = 'message';
       } else {
         phase = 'end';
         submitToBackend();
@@ -107,8 +93,6 @@
     if (!flow || !endNode) return;
     submitting = true;
     resultText = '';
-    quoteData = null;
-    resultType = '';
 
     try {
       const payload = {
@@ -122,30 +106,10 @@
         end_node_id: endNode.id
       };
 
-      if (endNode.data.endType === 'quote') {
-        const res = await fetch('/api/generate-quote', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          const result = await res.json();
-          quoteData = result.quote_data || null;
-          resultText = result.quote_text || '';
-          resultType = quoteData ? 'quote' : 'fallback';
-        } else {
-          const result = await submissionService.submit(payload);
-          resultText = result.quote_text || 'Votre demande a ete enregistree. Un specialiste vous contactera.';
-          resultType = 'fallback';
-        }
-      } else {
-        const result = await submissionService.submit(payload);
-        resultText = result.quote_text || 'Votre demande a ete enregistree. Merci!';
-        resultType = 'fallback';
-      }
+      await submissionService.submit(payload);
+      resultText = endNode.data.message || 'Obrigado pelas suas respostas!';
     } catch (e: any) {
-      resultText = 'Erreur lors de l\'envoi. Veuillez reessayer.';
-      resultType = 'error';
+      resultText = 'Erro ao enviar. Tente novamente.';
     } finally {
       submitting = false;
     }
@@ -232,7 +196,9 @@
           lead_address: clientData.address,
           qualifying_answers: answers,
           scheduled_date: selectedDate,
-          scheduled_time: selectedTime
+          scheduled_time: selectedTime,
+          whatsapp_template: endNode?.data.whatsappTemplate || undefined,
+          whatsapp_variables: endNode?.data.whatsappVariables || undefined
         })
       });
       if (res.ok) {
@@ -278,25 +244,8 @@
   let morningSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) < 12));
   let afternoonSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) >= 12));
 
-  function formatCurrency(val: number): string {
-    return val.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD' });
-  }
 
-  function printQuote() {
-    window.print();
-  }
 </script>
-
-<svelte:head>
-  <style>
-    @media print {
-      body * { visibility: hidden; }
-      .quote-card, .quote-card * { visibility: visible; }
-      .quote-card { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
-    }
-  </style>
-</svelte:head>
 
 <div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-4" style="font-weight: 400;">
   <div class="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-lg w-full overflow-hidden text-base">
@@ -457,157 +406,6 @@
           </div>
         </div>
 
-      {:else if endNode.data.endType === 'specialist'}
-        <div class="p-8 text-center">
-          <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3">{endNode.data.title}</h3>
-          <p class="text-base text-gray-600 mb-5">{endNode.data.message}</p>
-          <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700">
-            Seus dados foram registrados. Entraremos em contato em ate 24h.
-          </div>
-        </div>
-
-      {:else if endNode.data.endType === 'quote' && quoteData}
-        <!-- DEVIS PROFESSIONNEL -->
-        <div class="quote-card">
-          <!-- Header -->
-          <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-5">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-bold">Resumo</h3>
-                <p class="text-blue-200 text-xs mt-0.5">IT Valley</p>
-              </div>
-              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div class="mt-3 text-sm">
-              <p class="font-medium">{clientData.name}</p>
-              {#if clientData.address}
-                <p class="text-blue-200 text-xs">{clientData.address}</p>
-              {/if}
-            </div>
-          </div>
-
-          <!-- Items -->
-          <div class="px-6 py-4">
-            <table class="w-full text-sm" data-testid="quote-items-table">
-              <thead>
-                <tr class="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                  <th class="text-left py-2 font-medium">Produit / Service</th>
-                  <th class="text-center py-2 font-medium w-12">Qte</th>
-                  <th class="text-right py-2 font-medium">Prix</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each quoteData.items as item}
-                  <tr class="border-b border-gray-50">
-                    <td class="py-2.5 text-gray-800 font-medium">{item.description}</td>
-                    <td class="py-2.5 text-center text-gray-500">{item.quantity}</td>
-                    <td class="py-2.5 text-right font-medium tabular-nums {item.subtotal === 0 ? 'text-amber-600 italic' : 'text-gray-800'}">{item.subtotal === 0 ? 'A consulter' : formatCurrency(item.subtotal)}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Totals -->
-          <div class="px-6 pb-4">
-            <div class="bg-gray-50 rounded-xl p-4 space-y-1.5">
-              <div class="flex justify-between text-sm text-gray-600">
-                <span>Sous-total</span>
-                <span class="tabular-nums">{formatCurrency(quoteData.subtotal)}</span>
-              </div>
-              <div class="flex justify-between text-sm text-gray-500">
-                <span>TPS (5%)</span>
-                <span class="tabular-nums">{formatCurrency(quoteData.taxes_tps)}</span>
-              </div>
-              <div class="flex justify-between text-sm text-gray-500">
-                <span>TVQ (9,975%)</span>
-                <span class="tabular-nums">{formatCurrency(quoteData.taxes_tvq)}</span>
-              </div>
-              <div class="border-t border-gray-200 pt-2 mt-2 flex justify-between text-base font-bold text-gray-900">
-                <span>Total</span>
-                <span class="tabular-nums text-blue-700">{formatCurrency(quoteData.total)}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recommendations -->
-          {#if quoteData.recommendations}
-            <div class="px-6 pb-3">
-              <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                <p class="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Recommandations</p>
-                <p class="text-xs text-blue-800 leading-relaxed">{quoteData.recommendations}</p>
-              </div>
-            </div>
-          {/if}
-
-          <!-- Notes -->
-          {#if quoteData.notes}
-            <div class="px-6 pb-3">
-              <div class="bg-amber-50 border border-amber-100 rounded-lg p-3">
-                <p class="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-1">Notes</p>
-                <p class="text-xs text-amber-800 leading-relaxed">{quoteData.notes}</p>
-              </div>
-            </div>
-          {/if}
-
-          <!-- Footer -->
-          <div class="px-6 pb-4">
-            <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
-              <span>Validite: 30 jours</span>
-              <span class="text-right">Inspection gratuite</span>
-              <span>Garantie 2 ans</span>
-              <span class="text-right">Permis inclus</span>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="px-6 pb-6 flex gap-2 no-print">
-            <button
-              onclick={printQuote}
-              class="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
-              </svg>
-              Imprimer / PDF
-            </button>
-          </div>
-        </div>
-
-      {:else if endNode.data.endType === 'quote' && resultText}
-        <!-- Fallback: texto simples se quote_data nao veio -->
-        <div class="p-8">
-          <div class="text-center mb-4">
-            <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-3">
-              <svg class="w-7 h-7 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900">Sua solicitacao foi registrada!</h3>
-          </div>
-          <pre class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs whitespace-pre-wrap font-mono text-gray-700 max-h-80 overflow-y-auto">{resultText}</pre>
-        </div>
-
-      {:else if resultType === 'message'}
-        <div class="p-8 text-center">
-          <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
-            <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
-          <p class="text-sm text-gray-600">{endNode.data.message}</p>
-        </div>
-
       {:else}
         <div class="p-8 text-center">
           <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
@@ -616,10 +414,7 @@
             </svg>
           </div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
-          <p class="text-sm text-gray-600">Obrigado pelas suas respostas!</p>
-          {#if resultText}
-            <p class="text-sm text-gray-500 mt-3">{resultText}</p>
-          {/if}
+          <p class="text-sm text-gray-600">{resultText}</p>
         </div>
       {/if}
 
@@ -818,6 +613,27 @@
               <span class="text-xs text-green-700">Horario</span>
               <span class="text-sm font-semibold text-green-900">{selectedTime}</span>
             </div>
+          </div>
+
+          <!-- Notificacoes enviadas -->
+          <div class="space-y-2 mb-4 text-left">
+            {#if schedulingResult?.gcal_event_link}
+              <div class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <span class="text-xs text-blue-700">Convite enviado para <strong>{clientData.email}</strong> via Google Calendar</span>
+              </div>
+            {/if}
+            {#if schedulingResult?.whatsapp_sent}
+              <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <svg class="w-4 h-4 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.75.75 0 00.917.918l4.462-1.494A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.337 0-4.542-.664-6.407-1.813l-.456-.276-2.653.888.889-2.651-.277-.458A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                </svg>
+                <span class="text-xs text-green-700">WhatsApp enviado para <strong>{clientData.phone}</strong></span>
+              </div>
+            {/if}
           </div>
 
           <p class="text-xs text-gray-400">Obrigado, {clientData.name}!</p>
