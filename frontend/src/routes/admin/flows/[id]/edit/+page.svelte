@@ -254,7 +254,7 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
       }
       store.hasChanges = false;
       toast = 'Salvo!';
-      setTimeout(() => toast = '', 2500);
+      setTimeout(() => goto('/admin/flows'), 1000);
     } catch (e: any) {
       toast = 'Erro: ' + e.message;
     } finally {

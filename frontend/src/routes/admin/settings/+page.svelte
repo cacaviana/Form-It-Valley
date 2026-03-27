@@ -2,66 +2,53 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
 
-  type ModelOption = { id: string; label: string };
-  type AvailableModels = Record<string, ModelOption[]>;
-
-  let provider = $state('anthropic');
-  let model = $state('claude-sonnet-4-20250514');
-  let availableModels = $state<AvailableModels>({});
+  let morningSlots = $state(3);
+  let afternoonSlots = $state(3);
   let loading = $state(true);
   let saving = $state(false);
   let saved = $state(false);
 
   onMount(async () => {
-    const res = await fetch('/api/settings');
-    const data = await res.json();
-    provider = data.provider;
-    model = data.model;
-    availableModels = data.available_models ?? {};
+    try {
+      const res = await fetch('/api/scheduling-config');
+      if (res.ok) {
+        const data = await res.json();
+        morningSlots = data.morning_slots ?? 3;
+        afternoonSlots = data.afternoon_slots ?? 3;
+      }
+    } catch (e) { /* usa defaults */ }
     loading = false;
   });
-
-  function onProviderChange(p: string) {
-    provider = p;
-    const models = availableModels[p] ?? [];
-    if (models.length > 0) model = models[0].id;
-  }
 
   async function save() {
     saving = true;
     saved = false;
-    await fetch('/api/settings', {
+    await fetch('/api/scheduling-config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, model })
+      body: JSON.stringify({
+        morning_slots: morningSlots,
+        afternoon_slots: afternoonSlots
+      })
     });
     saving = false;
     saved = true;
     setTimeout(() => (saved = false), 3000);
   }
 
-  const providerLabels: Record<string, string> = {
-    anthropic: 'Anthropic (Claude)',
-    openai: 'OpenAI (GPT)'
-  };
+  const morningHours = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
+  const afternoonHours = ['14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
 </script>
 
 <div class="min-h-screen bg-gray-50">
   <header class="bg-white border-b px-6 py-4 flex items-center gap-3">
-    <button
-      onclick={() => goto('/admin/scheduling')}
-      class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1"
-      title="Retour"
-    >
+    <button onclick={() => goto('/admin')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
       </svg>
     </button>
     <div class="h-5 w-px bg-gray-200"></div>
-    <div>
-      <h1 class="text-xl font-bold text-gray-900">Form IT Valley</h1>
-      <p class="text-sm text-gray-500">Configuracoes de IA</p>
-    </div>
+    <h1 class="text-xl font-bold text-gray-900">Configuracoes</h1>
   </header>
 
   <main class="max-w-lg mx-auto p-6">
@@ -70,67 +57,65 @@
     {:else}
       <div class="bg-white rounded-xl border p-6 space-y-6">
         <div>
-          <h2 class="text-base font-semibold text-gray-900 mb-1">Modelo de IA</h2>
-          <p class="text-sm text-gray-500">Escolha o provedor e o modelo utilizado.</p>
+          <h2 class="text-base font-semibold text-gray-900 mb-1">Horarios disponiveis para agendamento</h2>
+          <p class="text-sm text-gray-500">Defina o maximo de horarios que o lead vai ver por periodo. Os horarios sao escolhidos aleatoriamente dentre os disponiveis.</p>
         </div>
 
-        <!-- Provider selector -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Provedor</label>
-          <div class="grid grid-cols-2 gap-3">
-            {#each Object.keys(availableModels) as p}
-              <button
-                onclick={() => onProviderChange(p)}
-                class="relative flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all text-left
-                  {provider === p
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'}"
-              >
-                {#if p === 'anthropic'}
-                  <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                    <span class="text-orange-600 font-bold text-sm">A</span>
-                  </div>
-                {:else}
-                  <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                    <span class="text-green-600 font-bold text-sm">G</span>
-                  </div>
-                {/if}
-                <span class="text-sm font-medium text-gray-800">{providerLabels[p] ?? p}</span>
-                {#if provider === p}
-                  <div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500"></div>
-                {/if}
-              </button>
-            {/each}
+        <!-- Manha -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+            </svg>
+            <h3 class="font-semibold text-blue-900">Manha</h3>
+            <span class="text-xs text-blue-500 ml-auto">09:00 - 11:30</span>
           </div>
-        </div>
-
-        <!-- Model selector -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
-          <div class="space-y-2">
-            {#each (availableModels[provider] ?? []) as m}
-              <button
-                onclick={() => (model = m.id)}
-                class="w-full flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all text-left
-                  {model === m.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'}"
-              >
-                <div>
-                  <div class="text-sm font-medium text-gray-900">{m.label}</div>
-                  <div class="text-xs text-gray-400 font-mono mt-0.5">{m.id}</div>
-                </div>
-                {#if model === m.id}
-                  <svg class="w-5 h-5 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
-                  </svg>
-                {/if}
-              </button>
-            {/each}
+          <label class="block text-sm text-blue-800 mb-2">Maximo de horarios para o lead</label>
+          <div class="flex items-center gap-3">
+            <input
+              type="range"
+              min="1"
+              max={morningHours.length}
+              bind:value={morningSlots}
+              class="flex-1 accent-blue-600"
+            />
+            <span class="text-2xl font-bold text-blue-700 w-8 text-center">{morningSlots}</span>
           </div>
+          <p class="text-xs text-blue-600 mt-2">De ate {morningHours.length} horarios livres, o lead vera no maximo {morningSlots} (aleatorios)</p>
         </div>
 
-        <!-- Save button -->
+        <!-- Tarde -->
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-3">
+            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+            </svg>
+            <h3 class="font-semibold text-orange-900">Tarde</h3>
+            <span class="text-xs text-orange-500 ml-auto">14:00 - 17:30</span>
+          </div>
+          <label class="block text-sm text-orange-800 mb-2">Maximo de horarios para o lead</label>
+          <div class="flex items-center gap-3">
+            <input
+              type="range"
+              min="1"
+              max={afternoonHours.length}
+              bind:value={afternoonSlots}
+              class="flex-1 accent-orange-600"
+            />
+            <span class="text-2xl font-bold text-orange-700 w-8 text-center">{afternoonSlots}</span>
+          </div>
+          <p class="text-xs text-orange-600 mt-2">De ate {afternoonHours.length} horarios livres, o lead vera no maximo {afternoonSlots} (aleatorios)</p>
+        </div>
+
+        <!-- Resumo -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <p class="text-sm text-gray-700">
+            O lead vera no maximo <strong>{morningSlots + afternoonSlots} horarios</strong> por dia
+            ({morningSlots} de manha + {afternoonSlots} de tarde), escolhidos aleatoriamente.
+          </p>
+        </div>
+
+        <!-- Save -->
         <div class="flex items-center gap-3 pt-2">
           <button
             onclick={save}

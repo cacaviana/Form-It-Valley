@@ -31,7 +31,7 @@
   let calYear = $state(new Date().getFullYear());
   let loadingDates = $state(false);
   let loadingSlots = $state(false);
-  let schedulingResult = $state<{ message: string; gcal_event_link?: string; whatsapp_sent?: boolean } | null>(null);
+  let schedulingResult = $state<{ message: string; gcal_event_link?: string; whatsapp_sent?: boolean; email_sent?: boolean } | null>(null);
 
   let resultText = $state('');
 
@@ -103,7 +103,8 @@
         client_phone: clientData.phone || undefined,
         client_address: clientData.address || undefined,
         answers,
-        end_node_id: endNode.id
+        end_node_id: endNode.id,
+        activecampaign_list_id: endNode.data.activecampaignListId || undefined
       };
 
       await submissionService.submit(payload);
@@ -198,7 +199,8 @@
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           whatsapp_template: endNode?.data.whatsappTemplate || undefined,
-          whatsapp_variables: endNode?.data.whatsappVariables || undefined
+          whatsapp_variables: endNode?.data.whatsappVariables || undefined,
+          activecampaign_list_id: endNode?.data.activecampaignListId || undefined
         })
       });
       if (res.ok) {
@@ -276,10 +278,6 @@
           <div>
             <label class="block text-sm font-medium text-gray-600 mb-1.5">WhatsApp</label>
             <input type="tel" bind:value={clientData.phone} class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1.5">Endereco</label>
-            <input type="text" bind:value={clientData.address} class="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" />
           </div>
           <button
             onclick={startQuestions}
@@ -623,6 +621,14 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                 </svg>
                 <span class="text-xs text-blue-700">Convite enviado para <strong>{clientData.email}</strong> via Google Calendar</span>
+              </div>
+            {/if}
+            {#if schedulingResult?.email_sent}
+              <div class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <span class="text-xs text-blue-700">E-mail enviado para <strong>{clientData.email}</strong></span>
               </div>
             {/if}
             {#if schedulingResult?.whatsapp_sent}

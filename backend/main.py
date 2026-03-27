@@ -1,12 +1,22 @@
-from fastapi import FastAPI
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(), override=True)
+
+import traceback
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from config.settings import settings
 from config.database import mongodb_client
 from routers.flow import router as flow_router
-from routers.submission import router as submission_router
 from routers.agent import router as agent_router
 from routers.settings import router as settings_router
+from routers.activecampaign import router as activecampaign_router
+from routers.notifications import router as notifications_router
+from routers.scheduling import router as scheduling_router
+from routers.auth import router as auth_router
+from routers.public import router as public_router
+from routers.users import router as users_router
 import logging
 
 logging.basicConfig(
@@ -65,10 +75,29 @@ async def health():
         return {"status": "unhealthy", "mongodb": str(e)}
 
 
-app.include_router(flow_router)
-app.include_router(submission_router)
-app.include_router(agent_router)
-app.include_router(settings_router)
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception: {exc}")
+    logger.error(traceback.format_exc())
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
+
+
+# Rotas publicas (sem auth)
+app.include_router(auth_router)
+app.include_router(public_router)
+
+# Rotas protegidas (requerem JWT)
+from itvalleysecurity.fastapi import require_access
+from fastapi import Depends
+
+protected = {"dependencies": [Depends(require_access)]}
+app.include_router(flow_router, **protected)
+app.include_router(agent_router, **protected)
+app.include_router(settings_router, **protected)
+app.include_router(activecampaign_router, **protected)
+app.include_router(notifications_router, **protected)
+app.include_router(scheduling_router, **protected)
+app.include_router(users_router, **protected)
 
 
 if __name__ == "__main__":

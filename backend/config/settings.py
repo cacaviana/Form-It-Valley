@@ -29,6 +29,23 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = Field(default=None)
     anthropic_model: str = Field(default="claude-sonnet-4-20250514")
 
+    # ActiveCampaign
+    activecampaign_api_key: Optional[str] = Field(default=None)
+    activecampaign_api_url: Optional[str] = Field(default=None)
+
+    # WhatsApp (microsservico IT Valley)
+    whatsapp_api_url: Optional[str] = Field(default=None)
+    whatsapp_api_key: Optional[str] = Field(default=None)
+    whatsapp_template_name: str = Field(default="teste0004")
+
+    # Email (Resend)
+    resend_api_key: Optional[str] = Field(default=None)
+    email_from: str = Field(default="onboarding@resend.dev")
+
+    # Google Calendar
+    google_service_account_json: Optional[str] = Field(default=None)
+    google_calendar_id: Optional[str] = Field(default=None)
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

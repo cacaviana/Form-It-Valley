@@ -17,6 +17,10 @@
   let loadingTemplates = $state(false);
   let selectedTemplate = $derived(waTemplates.find(t => t.name === data.whatsappTemplate));
 
+  // ActiveCampaign lists
+  let acLists = $state<{ id: string; name: string; subscriber_count: number }[]>([]);
+  let loadingAcLists = $state(false);
+
   async function loadTemplates() {
     if (waTemplates.length > 0) return;
     loadingTemplates = true;
@@ -27,10 +31,27 @@
     loadingTemplates = false;
   }
 
+  async function loadAcLists() {
+    if (acLists.length > 0) return;
+    loadingAcLists = true;
+    try {
+      const res = await fetch('/api/activecampaign/lists');
+      if (res.ok) acLists = await res.json();
+    } catch (e) { /* silent */ }
+    loadingAcLists = false;
+  }
+
   // Carrega templates quando end type for scheduling
   $effect(() => {
     if (node.type === 'end' && data.endType === 'scheduling') {
       loadTemplates();
+    }
+  });
+
+  // Carrega listas AC quando for end node
+  $effect(() => {
+    if (node.type === 'end') {
+      loadAcLists();
     }
   });
 
@@ -507,6 +528,51 @@
           ></textarea>
         </div>
       {/if}
+
+      <!-- ActiveCampaign -->
+      <div class="border-t border-gray-200 pt-4 mt-2">
+        <div class="flex items-center gap-1.5 mb-3">
+          <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <label class="label !mb-0">ActiveCampaign</label>
+        </div>
+
+        {#if loadingAcLists}
+          <div class="text-xs text-gray-400 py-2">Carregando listas...</div>
+        {:else if acLists.length === 0}
+          <div class="text-xs text-gray-400 py-2">Nenhuma lista disponivel. Verifique as credenciais do ActiveCampaign.</div>
+        {:else}
+          <label class="text-xs text-gray-500 mb-1 block">Salvar lead na lista:</label>
+          <select
+            value={data.activecampaignListId || ''}
+            onchange={(e) => {
+              const listId = (e.target as HTMLSelectElement).value;
+              const list = acLists.find(l => l.id === listId);
+              onUpdate({
+                activecampaignListId: listId || undefined,
+                activecampaignListName: list?.name || undefined
+              });
+            }}
+            class="input"
+          >
+            <option value="">Nao salvar no ActiveCampaign</option>
+            {#each acLists as list}
+              <option value={list.id}>{list.name} ({list.subscriber_count} contatos)</option>
+            {/each}
+          </select>
+
+          {#if data.activecampaignListId}
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
+              <p class="text-xs text-blue-700">
+                O lead sera automaticamente cadastrado na lista
+                <strong>{data.activecampaignListName || data.activecampaignListId}</strong>
+                ao preencher o formulario.
+              </p>
+            </div>
+          {/if}
+        {/if}
+      </div>
     {/if}
 
     <!-- ==================== START ==================== -->

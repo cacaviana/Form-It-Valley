@@ -44,6 +44,9 @@ export interface FlowNodeData {
   // WhatsApp template config (scheduling)
   whatsappTemplate?: string;
   whatsappVariables?: string[]; // cada variavel pode usar placeholders: {{nome}}, {{data}}, {{horario}}, {{link}}
+  // ActiveCampaign
+  activecampaignListId?: string;
+  activecampaignListName?: string;
 }
 
 export interface FlowNode {
