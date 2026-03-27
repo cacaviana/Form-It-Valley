@@ -1,31 +1,20 @@
 import { json } from '@sveltejs/kit';
-import { getDb } from '$lib/server/db';
+import { backendUrl, authHeaders } from '$lib/server/proxy';
 import type { RequestHandler } from './$types';
 
-const CONFIG_ID = 'scheduling_config';
-
-export const GET: RequestHandler = async () => {
-	const db = await getDb();
-	const config = await db.collection('settings').findOne({ _id: CONFIG_ID });
-	return json({
-		morning_slots: config?.morning_slots ?? 3,
-		afternoon_slots: config?.afternoon_slots ?? 3
+export const GET: RequestHandler = async ({ request }) => {
+	const res = await fetch(backendUrl('/api/scheduling-config'), {
+		headers: authHeaders(request)
 	});
+	return json(await res.json(), { status: res.status });
 };
 
 export const PUT: RequestHandler = async ({ request }) => {
 	const body = await request.json();
-	const db = await getDb();
-	await db.collection('settings').updateOne(
-		{ _id: CONFIG_ID },
-		{
-			$set: {
-				morning_slots: body.morning_slots ?? 3,
-				afternoon_slots: body.afternoon_slots ?? 3,
-				updated_at: new Date().toISOString()
-			}
-		},
-		{ upsert: true }
-	);
-	return json({ morning_slots: body.morning_slots, afternoon_slots: body.afternoon_slots });
+	const res = await fetch(backendUrl('/api/scheduling-config'), {
+		method: 'PUT',
+		headers: authHeaders(request),
+		body: JSON.stringify(body)
+	});
+	return json(await res.json(), { status: res.status });
 };

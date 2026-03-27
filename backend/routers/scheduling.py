@@ -18,6 +18,14 @@ _notifications = NotificationService()
 _activecampaign = ActiveCampaignService()
 
 
+@router.get("")
+async def list_schedulings():
+    """Lista todos os agendamentos (admin)."""
+    db = mongodb_client.database
+    docs = await db["scheduling"].find().sort("created_at", -1).to_list(200)
+    return [_serialize(doc) for doc in docs]
+
+
 @router.get("/dates")
 async def get_dates(month: int, year: int):
     """Retorna dias do mes com disponibilidade."""
@@ -28,6 +36,11 @@ async def get_dates(month: int, year: int):
 async def get_slots(date: str):
     """Retorna horarios disponiveis para uma data."""
     return await _gcal.get_available_slots(date)
+
+
+def _serialize(doc: dict) -> dict:
+    """Converte ObjectId para string."""
+    return {**doc, "id": str(doc["_id"]), "_id": None}
 
 
 class CreateSchedulingRequest(BaseModel):

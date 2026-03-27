@@ -17,6 +17,8 @@ from routers.scheduling import router as scheduling_router
 from routers.auth import router as auth_router
 from routers.public import router as public_router
 from routers.users import router as users_router
+from routers.scheduling_config import router as scheduling_config_router
+from routers.whatsapp import router as whatsapp_router
 import logging
 
 logging.basicConfig(
@@ -98,6 +100,8 @@ app.include_router(activecampaign_router, **protected)
 app.include_router(notifications_router, **protected)
 app.include_router(scheduling_router, **protected)
 app.include_router(users_router, **protected)
+app.include_router(scheduling_config_router, **protected)
+app.include_router(whatsapp_router, **protected)
 
 
 if __name__ == "__main__":
