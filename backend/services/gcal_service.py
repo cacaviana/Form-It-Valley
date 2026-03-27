@@ -107,12 +107,13 @@ class GCalService:
                 is_weekday = d.weekday() < 5
                 is_future = d >= today
                 day_events = events_per_day.get(date_str, 0)
-                free_slots = max(0, max_slots - day_events)
+                real_free = max(0, ALL_SLOTS_COUNT - day_events)
+                visible_slots = min(real_free, max_slots)
 
                 dates.append({
                     "date": date_str,
-                    "available": is_weekday and is_future and free_slots > 0,
-                    "slots_count": free_slots if (is_weekday and is_future) else 0,
+                    "available": is_weekday and is_future and real_free > 0,
+                    "slots_count": visible_slots if (is_weekday and is_future) else 0,
                 })
             return dates
 
@@ -127,7 +128,7 @@ class GCalService:
                 dates.append({
                     "date": date_str,
                     "available": is_weekday and is_future,
-                    "slots_count": max_slots if (is_weekday and is_future) else 0,
+                    "slots_count": min(ALL_SLOTS_COUNT, max_slots) if (is_weekday and is_future) else 0,
                 })
             return dates
 

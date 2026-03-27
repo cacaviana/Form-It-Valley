@@ -14,33 +14,13 @@
     loading = false;
   });
 
-  async function createNew() {
-    const res = await authFetch('/api/flows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Novo fluxo',
-        slug: `fluxo-${Date.now()}`,
-        status: 'draft',
-        flow_type: 'scheduling',
-        nodes: [
-          { id: 'start-1', type: 'start', position: { x: 250, y: 0 }, data: { label: 'Inicio' } },
-          { id: 'end-1', type: 'end', position: { x: 250, y: 200 }, data: { label: 'Fim', endType: 'scheduling', message: 'Escolha o melhor dia e horario.' } },
-        ],
-        edges: [
-          { id: 'e-start-end', source: 'start-1', target: 'end-1' },
-        ]
-      })
-    });
-    if (res.ok) {
-      const created = await res.json();
-      goto(`/admin/flows/${created._id}/edit`);
-    }
+  function createNew() {
+    goto('/admin/flows/new/edit');
   }
 
   async function deleteFlow(flow: Flow) {
     if (!confirm(`Excluir "${flow.name}"?`)) return;
-    await fetch(`/api/flows/${flow._id}`, { method: 'DELETE' });
+    await authFetch(`/api/flows/${flow._id}`, { method: 'DELETE' });
     flows = flows.filter(f => f._id !== flow._id);
   }
 

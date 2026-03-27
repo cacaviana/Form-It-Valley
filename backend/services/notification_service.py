@@ -77,7 +77,7 @@ class NotificationService:
             logger.error(f"Erro ao enviar e-mail: {e}")
             return False
 
-    # ─── WHATSAPP (microsservico IT Valley) ───
+    # ─── WHATSAPP (API direta Meta) ───
 
     async def send_whatsapp_notification(
         self,
@@ -90,20 +90,19 @@ class NotificationService:
         template_name: Optional[str] = None,
         template_variables: Optional[list[str]] = None,
     ) -> bool:
-        api_url = settings.whatsapp_api_url
-        api_key = settings.whatsapp_api_key
-        default_template = settings.whatsapp_template_name or "teste0004"
-        template = template_name or default_template
+        from services.whatsapp_service import WhatsAppService
+        wa = WhatsAppService()
 
-        if not api_url or not api_key:
-            logger.warning("WHATSAPP_API_URL ou WHATSAPP_API_KEY nao configurada — WhatsApp nao enviado")
+        if not wa._configured():
+            logger.warning("WhatsApp nao configurado — mensagem nao enviada")
             return False
 
-        phone, country_code = _normalize_phone(lead_phone)
+        phone, _ = _normalize_phone(lead_phone)
         if not phone:
             logger.warning("Telefone invalido, WhatsApp nao enviado")
             return False
 
+        template = template_name or settings.whatsapp_template_name or "teste0004"
         formatted_date = _format_date_pt_br(scheduled_date)
 
         # Resolve placeholders ou usa fallback padrao
@@ -126,41 +125,13 @@ class NotificationService:
                 f"Acesse o link da reuniao: {calendar_link}" if calendar_link else "Voce recebera o link da reuniao por e-mail. Ate la!",
             ]
 
-        # Meta API NAO aceita \n, \t ou 4+ espacos consecutivos
-        variaveis = [re.sub(r"\s{4,}", "   ", v.replace("\n", " ").replace("\t", " ")) for v in variaveis]
-
-        payload = {
-            "nome": lead_name,
-            "telefone": phone,
-            "template_name": template,
-            "language": "pt_BR",
-            "country_code": country_code,
-            "variaveis": variaveis,
-        }
-
-        try:
-            logger.info(f"Enviando WhatsApp para {phone} ({country_code}) via template {template}")
-
-            async with httpx.AsyncClient(timeout=15) as client:
-                res = await client.post(
-                    f"{api_url}/mensagens/enviar",
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-API-Key": api_key,
-                    },
-                    json=payload,
-                )
-
-            if res.status_code == 200:
-                result = res.json()
-                logger.info(f"WhatsApp queued — message_id: {result.get('message_id')}, status: {result.get('status')}")
-                return True
-            else:
-                logger.error(f"Erro ao enviar WhatsApp: {res.text}")
-                return False
-        except Exception as e:
-            logger.error(f"Erro ao enviar WhatsApp: {e}")
-            return False
+        result = await wa.send_template_message(
+            to_phone=phone,
+            template_name=template,
+            language="pt_BR",
+            variables=variaveis,
+        )
+        return result.get("success", False)
 
 
 # ─── Helpers ───

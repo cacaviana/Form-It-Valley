@@ -40,8 +40,8 @@ class UserService:
         return mongodb_client.database[self._collection_name]
 
     async def list_all(self) -> list[dict]:
-        """Lista todos os usuarios (sem senha)."""
-        docs = await self._collection.find().sort("created_at", -1).to_list(200)
+        """Lista todos os usuarios ativos (sem senha)."""
+        docs = await self._collection.find({"active": {"$ne": False}}).sort("created_at", -1).to_list(200)
         return [_sanitize(doc) for doc in docs]
 
     async def get_by_id(self, user_id: str) -> Optional[dict]:
@@ -123,11 +123,14 @@ class UserService:
         return await self.get_by_id(user_id)
 
     async def delete(self, user_id: str) -> bool:
-        """Remove usuario."""
+        """Soft delete — marca active=False."""
         from bson import ObjectId
         try:
-            result = await self._collection.delete_one({"_id": ObjectId(user_id)})
-            return result.deleted_count > 0
+            result = await self._collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"active": False}},
+            )
+            return result.modified_count > 0
         except Exception:
             return False
 

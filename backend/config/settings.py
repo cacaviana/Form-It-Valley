@@ -33,9 +33,10 @@ class Settings(BaseSettings):
     activecampaign_api_key: Optional[str] = Field(default=None)
     activecampaign_api_url: Optional[str] = Field(default=None)
 
-    # WhatsApp (microsservico IT Valley)
-    whatsapp_api_url: Optional[str] = Field(default=None)
-    whatsapp_api_key: Optional[str] = Field(default=None)
+    # WhatsApp (API direta Meta)
+    whatsapp_access_token: Optional[str] = Field(default=None)
+    whatsapp_phone_number_id: Optional[str] = Field(default=None)
+    whatsapp_waba_id: Optional[str] = Field(default=None)
     whatsapp_template_name: str = Field(default="teste0004")
 
     # Email (Resend)

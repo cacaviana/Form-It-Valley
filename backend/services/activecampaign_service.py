@@ -28,27 +28,40 @@ class ActiveCampaignService:
             return []
 
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with httpx.AsyncClient(timeout=15) as client:
                 res = await client.get(
                     f"{self._api_url}/api/3/lists",
                     params={"limit": 100},
                     headers=self._headers(),
                 )
 
-            if res.status_code != 200:
-                logger.error(f"ActiveCampaign lists error: {res.status_code} {res.text}")
-                return []
+                if res.status_code != 200:
+                    logger.error(f"ActiveCampaign lists error: {res.status_code} {res.text}")
+                    return []
 
-            data = res.json()
-            return [
-                {
-                    "id": l["id"],
-                    "name": l["name"],
-                    "cdate": l.get("cdate", ""),
-                    "subscriber_count": int(l.get("subscriber_count", 0)),
-                }
-                for l in data.get("lists", [])
-            ]
+                data = res.json()
+                lists = []
+                for l in data.get("lists", []):
+                    list_id = l["id"]
+                    real_count = int(l.get("subscriber_count", 0))
+                    try:
+                        count_res = await client.get(
+                            f"{self._api_url}/api/3/contacts",
+                            params={"listid": list_id, "status": 1, "limit": 1},
+                            headers=self._headers(),
+                        )
+                        if count_res.status_code == 200:
+                            count_data = count_res.json()
+                            real_count = int(count_data.get("meta", {}).get("total", real_count))
+                    except Exception:
+                        pass
+                    lists.append({
+                        "id": list_id,
+                        "name": l["name"],
+                        "cdate": l.get("cdate", ""),
+                        "subscriber_count": real_count,
+                    })
+                return lists
         except Exception as e:
             logger.error(f"ActiveCampaign lists fetch error: {e}")
             return []

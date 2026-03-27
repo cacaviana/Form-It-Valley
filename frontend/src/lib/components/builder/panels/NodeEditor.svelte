@@ -18,6 +18,22 @@
   let loadingTemplates = $state(false);
   let selectedTemplate = $derived(waTemplates.find(t => t.name === data.whatsappTemplate));
 
+  // Preview resolvido do WhatsApp
+  function getResolvedPreview(): string {
+    if (!selectedTemplate) return '';
+    const examples: Record<string, string> = {
+      nome: 'Joao Silva', data: 'segunda-feira, 7 de abril de 2026',
+      horario: '14:30', link: 'https://calendar.google.com/...',
+      email: 'joao@email.com', telefone: '(27) 99513-0691'
+    };
+    const vars = data.whatsappVariables || [];
+    return selectedTemplate.body.replace(/\{\{(\d+)\}\}/g, (_: string, num: string) => {
+      const idx = parseInt(num) - 1;
+      const varValue = vars[idx] || '{{' + num + '}}';
+      return varValue.replace(/\{\{(\w+)\}\}/g, (_m: string, key: string) => examples[key] || '{{' + key + '}}');
+    });
+  }
+
   // ActiveCampaign lists
   let acLists = $state<{ id: string; name: string; subscriber_count: number }[]>([]);
   let loadingAcLists = $state(false);
@@ -468,40 +484,50 @@
             </select>
 
             {#if selectedTemplate}
-              <!-- Preview do template -->
-              <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
-                <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Preview</p>
-                <p class="text-xs text-gray-700 whitespace-pre-wrap">{selectedTemplate.body}</p>
-              </div>
-
               <!-- Variaveis -->
               {#if selectedTemplate.variableCount > 0}
-                <div class="space-y-2">
-                  <p class="text-xs font-semibold text-gray-500 uppercase">Variaveis</p>
+                <div class="space-y-2 mb-3">
+                  <p class="text-xs font-semibold text-gray-500 uppercase">Variaveis do template</p>
                   <div class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-1">
                     <p class="text-xs text-blue-700">Placeholders disponiveis:</p>
                     <div class="flex flex-wrap gap-1 mt-1">
                       {#each placeholderOptions as ph}
-                        <span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">{ph.value}</span>
+                        <button
+                          type="button"
+                          class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono hover:bg-blue-200 cursor-pointer"
+                          title="Clique para copiar: {ph.value} — {ph.label}"
+                          onclick={() => navigator.clipboard.writeText(ph.value)}
+                        >{ph.value}</button>
                       {/each}
                     </div>
                   </div>
                   {#each Array(selectedTemplate.variableCount) as _, i}
                     <div>
                       <label class="text-xs text-gray-500 mb-0.5 block">
-                        {`{{${i + 1}}}`}
+                        Variavel {`{{${i + 1}}}`}
                       </label>
                       <input
                         type="text"
                         value={(data.whatsappVariables || [])[i] || ''}
                         oninput={(e) => updateVariable(i, (e.target as HTMLInputElement).value)}
                         class="input !py-1.5 text-xs font-mono"
-                        placeholder="Ex: {{nome}}"
+                        placeholder={'Ex: {{nome}}'}
                       />
                     </div>
                   {/each}
                 </div>
               {/if}
+
+              <!-- Preview da mensagem -->
+              <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div class="flex items-center gap-1.5 mb-2">
+                  <svg class="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  </svg>
+                  <p class="text-xs font-semibold text-green-800">Preview da mensagem</p>
+                </div>
+                <p class="text-xs text-green-900 whitespace-pre-wrap leading-relaxed">{getResolvedPreview()}</p>
+              </div>
             {/if}
           {/if}
         </div>
