@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { FlowsService } from '$lib/services/flows.service';
+  import { authFetch } from '$lib/utils/auth-fetch';
   import type { Flow } from '$lib/dto/flows/types';
   import { onMount } from 'svelte';
 
@@ -14,7 +15,7 @@
   });
 
   async function createNew() {
-    const res = await fetch('/api/flows', {
+    const res = await authFetch('/api/flows', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

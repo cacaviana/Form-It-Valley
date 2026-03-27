@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Node } from '@xyflow/svelte';
   import type { FlowNodeData, QuestionType, FlowOption } from '$lib/dto/flows/types';
+  import { authFetch } from '$lib/utils/auth-fetch';
 
   let { node, onUpdate, onDelete, onClose, catalogItems = [] } = $props<{
     node: Node;
@@ -25,7 +26,7 @@
     if (waTemplates.length > 0) return;
     loadingTemplates = true;
     try {
-      const res = await fetch('/api/whatsapp-templates');
+      const res = await authFetch('/api/whatsapp-templates');
       if (res.ok) waTemplates = await res.json();
     } catch (e) { /* silent */ }
     loadingTemplates = false;
@@ -35,7 +36,7 @@
     if (acLists.length > 0) return;
     loadingAcLists = true;
     try {
-      const res = await fetch('/api/activecampaign/lists');
+      const res = await authFetch('/api/activecampaign/lists');
       if (res.ok) acLists = await res.json();
     } catch (e) { /* silent */ }
     loadingAcLists = false;

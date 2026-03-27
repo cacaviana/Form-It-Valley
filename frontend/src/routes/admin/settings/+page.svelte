@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { authFetch } from '$lib/utils/auth-fetch';
 
   let morningSlots = $state(3);
   let afternoonSlots = $state(3);
@@ -10,7 +11,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/scheduling-config');
+      const res = await authFetch('/api/scheduling-config');
       if (res.ok) {
         const data = await res.json();
         morningSlots = data.morning_slots ?? 3;
@@ -23,7 +24,7 @@
   async function save() {
     saving = true;
     saved = false;
-    await fetch('/api/scheduling-config', {
+    await authFetch('/api/scheduling-config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

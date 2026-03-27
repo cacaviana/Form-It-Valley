@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { authFetch } from '$lib/utils/auth-fetch';
 
   interface Scheduling {
     id: string;
@@ -40,7 +41,7 @@
 
   async function loadSchedulings() {
     try {
-      const res = await fetch('/api/scheduling');
+      const res = await authFetch('/api/scheduling');
       if (res.ok) schedulings = await res.json();
     } catch (e) { /* silent */ }
   }
@@ -96,11 +97,12 @@
   let today = $derived(new Date().toISOString().split('T')[0]);
   let agendasLivres = $derived(dates.filter(d => d.date >= today).reduce((sum, d) => sum + d.slots_count, 0));
 
-  // Agendados no mes selecionado
-  let agendadosNoMes = $derived(schedulings.filter(s => {
+  // Agendamentos filtrados pelo mes selecionado
+  let schedulingsDoMes = $derived(schedulings.filter(s => {
     const [y, m] = s.scheduled_date.split('-').map(Number);
     return y === calYear && m === calMonth + 1;
-  }).length);
+  }));
+  let agendadosNoMes = $derived(schedulingsDoMes.length);
 
   // Total de horarios do mes (dia 1 ao ultimo dia)
   let totalMes = $derived(dates.reduce((sum, d) => sum + d.slots_count, 0));
@@ -215,7 +217,7 @@
         <div class="lg:col-span-2">
           <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Agendamentos realizados</h2>
 
-          {#if schedulings.length === 0}
+          {#if schedulingsDoMes.length === 0}
             <div class="bg-white rounded-xl border p-8 text-center">
               <p class="text-gray-500 text-sm">Nenhum agendamento realizado ainda.</p>
               <p class="text-xs text-gray-400 mt-1">Os agendamentos aparecerao aqui quando leads preencherem os formularios.</p>
@@ -232,7 +234,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
-                  {#each schedulings as s}
+                  {#each schedulingsDoMes as s}
                     <tr class="hover:bg-gray-50 transition-colors">
                       <td class="px-4 py-3">
                         <p class="font-medium text-gray-900 text-sm">{s.lead_name}</p>
