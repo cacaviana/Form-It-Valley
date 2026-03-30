@@ -13,21 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python version
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Create virtual environment and install dependencies
+    - name: Zip deploy package (without venv - Azure installs on startup)
       working-directory: backend
-      run: |
-        python -m venv antenv
-        source antenv/bin/activate
-        pip install -r requirements.txt
-
-    - name: Zip deploy package (including venv)
-      working-directory: backend
-      run: zip -r deploy.zip . -x "__pycache__/*" "*.pyc" ".env"
+      run: zip -r deploy.zip . -x "__pycache__/*" "*.pyc" ".env" "antenv/*" "venv/*"
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
