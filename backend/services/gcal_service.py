@@ -76,6 +76,7 @@ class GCalService:
         return calendar.events().insert(
             calendarId=cal_id,
             body=event,
+            sendUpdates="all",
         ).execute()
 
     def _sync_create_event_with_meet(self, cal_id: str, event: dict) -> dict:
@@ -84,6 +85,7 @@ class GCalService:
             calendarId=cal_id,
             body=event,
             conferenceDataVersion=1,
+            sendUpdates="all",
         ).execute()
 
     # ─── Metodos async (wrappers) ───
@@ -213,6 +215,9 @@ class GCalService:
                     "dateTime": f"{scheduled_date}T{end_time}:00",
                     "timeZone": "America/Sao_Paulo",
                 },
+                "attendees": [
+                    {"email": lead_email},
+                ],
                 "conferenceData": {
                     "createRequest": {
                         "requestId": str(uuid.uuid4()),
