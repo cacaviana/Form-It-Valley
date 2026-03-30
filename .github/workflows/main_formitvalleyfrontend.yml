@@ -35,7 +35,6 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
-        app-name: 'formitvalleyfrontend'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_85b44b5ca03844c48ac9ea9265e21523 }}
+        app-name: 'formsitvalleyfrontend'
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FRONTEND }}
         package: frontend/build

@@ -33,6 +33,5 @@ jobs:
       uses: azure/webapps-deploy@v3
       with:
         app-name: 'formitvalleybackend'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_c769e64b410146ff80995a01b657d26f }}
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BACKEND }}
         package: backend/deploy.zip
