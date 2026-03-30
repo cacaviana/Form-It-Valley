@@ -25,9 +25,9 @@ jobs:
         source antenv/bin/activate
         pip install -r requirements.txt
 
-    - name: Zip deploy package
+    - name: Zip deploy package (including venv)
       working-directory: backend
-      run: zip -r deploy.zip . -x "venv/*" "__pycache__/*" "*.pyc"
+      run: zip -r deploy.zip . -x "__pycache__/*" "*.pyc" ".env"
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
