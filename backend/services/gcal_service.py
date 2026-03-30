@@ -76,7 +76,6 @@ class GCalService:
         return calendar.events().insert(
             calendarId=cal_id,
             body=event,
-            sendUpdates="all",
         ).execute()
 
     def _sync_create_event_with_meet(self, cal_id: str, event: dict) -> dict:
@@ -85,7 +84,6 @@ class GCalService:
             calendarId=cal_id,
             body=event,
             conferenceDataVersion=1,
-            sendUpdates="all",
         ).execute()
 
     # ─── Metodos async (wrappers) ───
@@ -230,20 +228,26 @@ class GCalService:
                 },
             }
 
-            # Tentar criar com Meet
+            # Tentar criar com Meet + attendees
             meet_link = ""
             try:
                 res = await asyncio.to_thread(self._sync_create_event_with_meet, cal_id, event)
-                conference = res.get("conferenceData", {})
-                for ep in conference.get("entryPoints", []):
-                    if ep.get("entryPointType") == "video":
-                        meet_link = ep.get("uri", "")
-                        break
-            except Exception as meet_err:
-                # Calendario nao suporta Meet — criar sem conferenceData
-                logger.warning(f"Meet nao suportado, criando sem: {meet_err}")
-                event.pop("conferenceData", None)
-                res = await asyncio.to_thread(self._sync_create_event, cal_id, event)
+            except Exception as err1:
+                logger.warning(f"Criacao com attendees falhou (DWD?): {err1}")
+                # SA sem DWD nao pode convidar attendees — remover e tentar novamente
+                event.pop("attendees", None)
+                try:
+                    res = await asyncio.to_thread(self._sync_create_event_with_meet, cal_id, event)
+                except Exception as err2:
+                    logger.warning(f"Meet nao suportado, criando sem: {err2}")
+                    event.pop("conferenceData", None)
+                    res = await asyncio.to_thread(self._sync_create_event, cal_id, event)
+
+            conference = res.get("conferenceData", {})
+            for ep in conference.get("entryPoints", []):
+                if ep.get("entryPointType") == "video":
+                    meet_link = ep.get("uri", "")
+                    break
 
             logger.info(f"GCal evento criado: {res.get('id')} — Meet: {meet_link or 'N/A'}")
             return {
