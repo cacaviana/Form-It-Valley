@@ -13,7 +13,18 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Zip deploy package (without venv - Azure installs on startup)
+    - name: Set up Python version
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies to package directory
+      working-directory: backend
+      run: |
+        mkdir -p .python_packages/lib/site-packages
+        pip install -r requirements.txt --target=.python_packages/lib/site-packages
+
+    - name: Zip deploy package
       working-directory: backend
       run: zip -r deploy.zip . -x "__pycache__/*" "*.pyc" ".env" "antenv/*" "venv/*"
 
