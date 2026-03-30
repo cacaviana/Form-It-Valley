@@ -30,6 +30,10 @@ class GCalService:
         creds_info = json.loads(json_str)
         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
 
+        delegate_email = settings.google_delegate_email
+        if delegate_email:
+            creds = creds.with_subject(delegate_email)
+
         return build("calendar", "v3", credentials=creds)
 
     def _get_calendar_id(self) -> str:
@@ -76,6 +80,7 @@ class GCalService:
         return calendar.events().insert(
             calendarId=cal_id,
             body=event,
+            sendUpdates="all",
         ).execute()
 
     def _sync_create_event_with_meet(self, cal_id: str, event: dict) -> dict:
@@ -84,6 +89,7 @@ class GCalService:
             calendarId=cal_id,
             body=event,
             conferenceDataVersion=1,
+            sendUpdates="all",
         ).execute()
 
     # ─── Metodos async (wrappers) ───
