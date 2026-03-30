@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
@@ -18,11 +18,16 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install dependencies to package directory
+    - name: Install dependencies (compatible with Azure Bullseye glibc)
       working-directory: backend
       run: |
         mkdir -p .python_packages/lib/site-packages
-        pip install -r requirements.txt --target=.python_packages/lib/site-packages
+        pip install -r requirements.txt \
+          --target=.python_packages/lib/site-packages \
+          --platform manylinux_2_28_x86_64 \
+          --python-version 3.12 \
+          --implementation cp \
+          --only-binary=:all:
 
     - name: Zip deploy package
       working-directory: backend
