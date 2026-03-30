@@ -18,16 +18,15 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install dependencies (compatible with Azure Bullseye glibc)
+    - name: Install dependencies
       working-directory: backend
       run: |
-        mkdir -p .python_packages/lib/site-packages
-        pip install -r requirements.txt \
-          --target=.python_packages/lib/site-packages \
-          --platform manylinux_2_28_x86_64 \
-          --python-version 3.12 \
-          --implementation cp \
-          --only-binary=:all:
+        PKGDIR=.python_packages/lib/site-packages
+        mkdir -p $PKGDIR
+        pip install -r requirements.txt --target=$PKGDIR
+        # Fix: reinstall cryptography with glibc 2.28 compatible binary (Azure runs Debian Bullseye = glibc 2.31)
+        pip install cryptography --target=$PKGDIR --upgrade --force-reinstall \
+          --platform manylinux_2_28_x86_64 --python-version 3.12 --implementation cp --only-binary=:all:
 
     - name: Zip deploy package
       working-directory: backend
