@@ -32,6 +32,6 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
-        app-name: 'formitvalleybackend'
+        app-name: 'formsitvalleybackend'
         publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BACKEND }}
         package: backend/deploy.zip
