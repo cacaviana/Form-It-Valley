@@ -77,7 +77,8 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
         scheduled_date=request.scheduled_date,
         scheduled_time=request.scheduled_time,
     )
-    calendar_link = gcal_result["html_link"] if gcal_result else ""
+    meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
+    calendar_link = gcal_result.get("html_link", "") if gcal_result else ""
 
     # 2. Email + WhatsApp em paralelo
     email_task = _notifications.send_scheduling_email(
@@ -86,6 +87,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
         scheduled_date=request.scheduled_date,
         scheduled_time=request.scheduled_time,
         calendar_link=calendar_link,
+        meet_link=meet_link,
     )
 
     if request.lead_phone:
@@ -95,7 +97,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
             lead_email=request.lead_email,
             scheduled_date=request.scheduled_date,
             scheduled_time=request.scheduled_time,
-            calendar_link=calendar_link,
+            calendar_link=meet_link or calendar_link,
             template_name=request.whatsapp_template,
             template_variables=request.whatsapp_variables,
         )
@@ -132,7 +134,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
         "timezone": "America/Sao_Paulo",
         "duration_minutes": 30,
         "gcal_event_id": gcal_result["event_id"] if gcal_result else None,
-        "gcal_event_link": calendar_link or None,
+        "gcal_event_link": meet_link or calendar_link or None,
         "email_sent": email_sent,
         "whatsapp_sent": whatsapp_sent,
         "activecampaign_synced": ac_synced,

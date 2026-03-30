@@ -81,7 +81,8 @@ async def create_scheduling(request: PublicSchedulingRequest):
             scheduled_date=request.scheduled_date,
             scheduled_time=request.scheduled_time,
         )
-        calendar_link = gcal_result["html_link"] if gcal_result else ""
+        meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
+        calendar_link = gcal_result.get("html_link", "") if gcal_result else ""
 
         email_task = _notifications.send_scheduling_email(
             lead_name=request.lead_name,
@@ -89,6 +90,7 @@ async def create_scheduling(request: PublicSchedulingRequest):
             scheduled_date=request.scheduled_date,
             scheduled_time=request.scheduled_time,
             calendar_link=calendar_link,
+            meet_link=meet_link,
         )
 
         if request.lead_phone:
@@ -98,7 +100,7 @@ async def create_scheduling(request: PublicSchedulingRequest):
                 lead_email=request.lead_email,
                 scheduled_date=request.scheduled_date,
                 scheduled_time=request.scheduled_time,
-                calendar_link=calendar_link,
+                calendar_link=meet_link or calendar_link,
                 template_name=request.whatsapp_template,
                 template_variables=request.whatsapp_variables,
             )
@@ -133,7 +135,7 @@ async def create_scheduling(request: PublicSchedulingRequest):
             "timezone": "America/Sao_Paulo",
             "duration_minutes": 30,
             "gcal_event_id": gcal_result["event_id"] if gcal_result else None,
-            "gcal_event_link": calendar_link or None,
+            "gcal_event_link": meet_link or calendar_link or None,
             "email_sent": email_sent,
             "whatsapp_sent": whatsapp_sent,
             "activecampaign_synced": ac_synced,

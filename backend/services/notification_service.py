@@ -20,6 +20,7 @@ class NotificationService:
         scheduled_date: str,
         scheduled_time: str,
         calendar_link: str = "",
+        meet_link: str = "",
     ) -> bool:
         api_key = settings.resend_api_key
         if not api_key:
@@ -42,7 +43,8 @@ class NotificationService:
                     <p style="margin: 0 0 8px; color: #374151;"><strong>Data:</strong> {formatted_date}</p>
                     <p style="margin: 0; color: #374151;"><strong>Horario:</strong> {scheduled_time}</p>
                 </div>
-                {'<a href="' + calendar_link + '" style="display: block; background: #2563eb; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Ver Evento no Google Calendar</a>' if calendar_link else ''}
+                {'<a href="' + meet_link + '" style="display: block; background: #00897b; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Entrar na Reuniao (Google Meet)</a>' if meet_link else ''}
+                {'<a href="' + calendar_link + '" style="display: block; background: #2563eb; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin-top: 8px;">Ver Evento no Google Calendar</a>' if calendar_link else ''}
                 <p style="color: #9ca3af; font-size: 12px; margin-top: 16px; text-align: center;">
                     IT Valley School - Escola de Tecnologia
                 </p>

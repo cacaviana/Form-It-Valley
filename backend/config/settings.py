@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, model_validator
 from typing import Optional
+import base64
 
 
 class Settings(BaseSettings):
@@ -45,7 +46,17 @@ class Settings(BaseSettings):
 
     # Google Calendar
     google_service_account_json: Optional[str] = Field(default=None)
+    google_service_account_json_b64: Optional[str] = Field(default=None)
     google_calendar_id: Optional[str] = Field(default=None)
+    google_delegate_email: Optional[str] = Field(default=None, description="Email do usuario Workspace para delegacao (necessario para criar Google Meet)")
+
+    @model_validator(mode="after")
+    def decode_google_sa_b64(self):
+        if not self.google_service_account_json and self.google_service_account_json_b64:
+            self.google_service_account_json = base64.b64decode(
+                self.google_service_account_json_b64
+            ).decode("utf-8")
+        return self
 
     class Config:
         env_file = ".env"

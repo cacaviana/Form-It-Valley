@@ -29,6 +29,7 @@ class GCalService:
 
         creds_info = json.loads(json_str)
         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+
         return build("calendar", "v3", credentials=creds)
 
     def _get_calendar_id(self) -> str:
@@ -75,6 +76,14 @@ class GCalService:
         return calendar.events().insert(
             calendarId=cal_id,
             body=event,
+        ).execute()
+
+    def _sync_create_event_with_meet(self, cal_id: str, event: dict) -> dict:
+        calendar = self._get_calendar_client()
+        return calendar.events().insert(
+            calendarId=cal_id,
+            body=event,
+            conferenceDataVersion=1,
         ).execute()
 
     # ─── Metodos async (wrappers) ───
@@ -192,6 +201,7 @@ class GCalService:
             end_m = (m + 30) % 60
             end_time = f"{str(end_h).zfill(2)}:{str(end_m).zfill(2)}"
 
+            import uuid
             event = {
                 "summary": f"Call Vendas - {lead_name}",
                 "description": f"Lead: {lead_name}\nEmail: {lead_email}\nTelefone: {lead_phone or 'N/A'}\n\nAgendado via FormItValley",
@@ -203,18 +213,38 @@ class GCalService:
                     "dateTime": f"{scheduled_date}T{end_time}:00",
                     "timeZone": "America/Sao_Paulo",
                 },
+                "conferenceData": {
+                    "createRequest": {
+                        "requestId": str(uuid.uuid4()),
+                        "conferenceSolutionKey": {"type": "hangoutsMeet"},
+                    }
+                },
                 "reminders": {
                     "useDefault": False,
                     "overrides": [{"method": "popup", "minutes": 30}],
                 },
             }
 
-            res = await asyncio.to_thread(self._sync_create_event, cal_id, event)
+            # Tentar criar com Meet
+            meet_link = ""
+            try:
+                res = await asyncio.to_thread(self._sync_create_event_with_meet, cal_id, event)
+                conference = res.get("conferenceData", {})
+                for ep in conference.get("entryPoints", []):
+                    if ep.get("entryPointType") == "video":
+                        meet_link = ep.get("uri", "")
+                        break
+            except Exception as meet_err:
+                # Calendario nao suporta Meet — criar sem conferenceData
+                logger.warning(f"Meet nao suportado, criando sem: {meet_err}")
+                event.pop("conferenceData", None)
+                res = await asyncio.to_thread(self._sync_create_event, cal_id, event)
 
-            logger.info(f"GCal evento criado: {res.get('id')}")
+            logger.info(f"GCal evento criado: {res.get('id')} — Meet: {meet_link or 'N/A'}")
             return {
                 "event_id": res.get("id", ""),
                 "html_link": res.get("htmlLink", ""),
+                "meet_link": meet_link,
             }
 
         except Exception as e:

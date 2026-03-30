@@ -14,6 +14,7 @@ class SendEmailRequest(BaseModel):
     scheduled_date: str
     scheduled_time: str
     calendar_link: str = ""
+    meet_link: str = ""
 
 
 class SendWhatsAppRequest(BaseModel):
@@ -36,6 +37,7 @@ async def send_email(request: SendEmailRequest):
         scheduled_date=request.scheduled_date,
         scheduled_time=request.scheduled_time,
         calendar_link=request.calendar_link,
+        meet_link=request.meet_link,
     )
     return {"sent": sent}
 
