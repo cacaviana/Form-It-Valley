@@ -80,7 +80,7 @@
     {:else if submissions.length === 0}
       <div class="text-center py-12">
         <p class="text-gray-500">Nenhuma resposta por enquanto.</p>
-        <p class="text-sm text-gray-400 mt-1">As respostas aparecerao aqui quando os leads preencherem um formulario.</p>
+        <p class="text-sm text-gray-400 mt-1">As respostas aparecerão aqui quando os leads preencherem um formulário.</p>
       </div>
     {:else}
       <div class="bg-white rounded-lg border overflow-hidden">

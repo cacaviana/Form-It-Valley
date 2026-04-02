@@ -20,7 +20,7 @@
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        error = data.detail || 'Email ou senha invalidos';
+        error = data.detail || 'Email ou senha inválidos';
         loading = false;
         return;
       }

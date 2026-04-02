@@ -139,49 +139,49 @@ class NotificationService:
 # ─── Helpers ───
 
 def _normalize_phone(phone: str) -> tuple[str, str]:
-    """Normaliza telefone e detecta pais.
+    """Normaliza telefone para formato E.164 (somente digitos com DDI).
 
-    Formatos aceitos:
-      BR: "27995130691", "5527995130691", "+55 27 99513-0691"
-      CA/US: "+1 (581) 578-0564", "15815780564", "5815780564"
+    Aceita:
+      - Formato novo (com DDI): "+55 27 99513-0691", "+33 6 12 34 56 78", "+1 (581) 578-0564"
+      - Formato legado BR: "27995130691", "5527995130691"
 
-    Retorna (telefone_com_codigo_pais, country_code_ISO).
+    Retorna (telefone_somente_digitos_com_ddi, country_code_ISO).
     """
     digits = re.sub(r"\D", "", phone)
 
-    # +55 ou 55 na frente → Brasil (13 digitos)
-    if len(digits) == 13 and digits.startswith("55"):
-        return digits, "BR"
+    if not digits or len(digits) < 7:
+        return "", ""
 
-    # +1 na frente → Canada/US (11 digitos: 1 + 10)
-    if len(digits) == 11 and digits.startswith("1"):
-        return digits, "CA"
+    # DDIs conhecidos (ordenados do mais longo pro mais curto para match correto)
+    _KNOWN_DDI = [
+        ("972", "IL"), ("971", "AE"), ("598", "UY"), ("595", "PY"),
+        ("351", "PT"),
+        ("91", "IN"), ("86", "CN"), ("81", "JP"), ("61", "AU"),
+        ("57", "CO"), ("56", "CL"), ("55", "BR"), ("54", "AR"),
+        ("52", "MX"), ("49", "DE"), ("44", "GB"), ("41", "CH"),
+        ("39", "IT"), ("34", "ES"), ("33", "FR"), ("32", "BE"),
+        ("31", "NL"), ("27", "ZA"),
+        ("7", "RU"),
+        ("1", "US"),
+    ]
 
-    # 11 digitos sem prefixo internacional → Brasil (DDD + 9 + 8 digitos)
-    if len(digits) == 11 and not digits.startswith("1"):
+    # Tenta detectar DDI no inicio dos digitos
+    for ddi, country in _KNOWN_DDI:
+        if digits.startswith(ddi):
+            local = digits[len(ddi):]
+            # Verifica se o numero local tem tamanho razoavel (>= 6 digitos)
+            if len(local) >= 6:
+                return digits, country
+
+    # Fallback legado: 11 digitos sem DDI reconhecido → assume Brasil
+    if len(digits) == 11:
         return f"55{digits}", "BR"
 
-    # 10 digitos → assume BR (DDD + 8 digitos, falta o 9)
+    # 10 digitos → assume BR (DDD + 8 digitos, falta o 9 do celular)
     if len(digits) == 10:
         ddd = digits[:2]
         num = digits[2:]
         return f"55{ddd}9{num}", "BR"
-
-    # 12 digitos: 55 + DDD + 8 digitos (BR sem o 9)
-    if len(digits) == 12 and digits.startswith("55"):
-        ddd = digits[2:4]
-        num = digits[4:]
-        return f"55{ddd}9{num}", "BR"
-
-    # Fallback: tenta detectar pelo prefixo
-    if digits.startswith("55") and len(digits) >= 12:
-        return digits, "BR"
-    if digits.startswith("1") and len(digits) >= 11:
-        return digits, "CA"
-
-    # Ultimo recurso: assume BR e adiciona 55
-    if len(digits) >= 10:
-        return f"55{digits}", "BR"
 
     return "", ""
 

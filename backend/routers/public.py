@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from services.flow_service import FlowService
 from services.submission_service import SubmissionService
+from services.lead_service import LeadService
 from services.gcal_service import GCalService
 from services.notification_service import NotificationService
 from services.activecampaign_service import ActiveCampaignService
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/api/public", tags=["public"])
 
 _flow_service = FlowService()
 _submission_service = SubmissionService()
+_lead_service = LeadService()
 _gcal = GCalService()
 _notifications = NotificationService()
 _activecampaign = ActiveCampaignService()
@@ -31,6 +33,29 @@ async def get_flow_by_slug(slug: str):
     if not result:
         raise HTTPException(status_code=404, detail="Flow nao encontrado")
     return result
+
+
+class CreateLeadRequest(BaseModel):
+    flow_id: str
+    flow_slug: str
+    client_name: str
+    client_email: str
+    client_phone: Optional[str] = None
+    client_phone_country_code: Optional[str] = None
+    client_address: Optional[str] = None
+    activecampaign_list_id: Optional[str] = None
+    tenant_id: Optional[str] = "tenant_1"
+
+
+@router.post("/leads", status_code=201)
+async def create_lead(request: CreateLeadRequest):
+    """Cria lead ao clicar em Comecar — salva no MongoDB + ActiveCampaign (sem auth)."""
+    try:
+        result = await _lead_service.create(request.model_dump())
+        return result
+    except Exception as e:
+        logger.exception("Erro ao criar lead")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/submissions", status_code=201, response_model=CreateSubmissionResponse)
@@ -67,7 +92,6 @@ class PublicSchedulingRequest(BaseModel):
     scheduled_time: str
     whatsapp_template: Optional[str] = None
     whatsapp_variables: Optional[list[str]] = None
-    activecampaign_list_id: Optional[str] = None
 
 
 @router.post("/scheduling", status_code=201)
@@ -109,18 +133,6 @@ async def create_scheduling(request: PublicSchedulingRequest):
             email_sent = await email_task
             whatsapp_sent = False
 
-        ac_synced = False
-        if request.activecampaign_list_id:
-            name_parts = (request.lead_name or "").strip().split(" ")
-            ac_result = await _activecampaign.add_contact_to_list(
-                email=request.lead_email,
-                first_name=name_parts[0] if name_parts else "",
-                last_name=" ".join(name_parts[1:]) if len(name_parts) > 1 else "",
-                phone=request.lead_phone or "",
-                list_id=request.activecampaign_list_id,
-            )
-            ac_synced = ac_result.get("success", False)
-
         db = mongodb_client.database
         doc = {
             "flow_id": request.flow_id,
@@ -138,7 +150,6 @@ async def create_scheduling(request: PublicSchedulingRequest):
             "gcal_event_link": meet_link or calendar_link or None,
             "email_sent": email_sent,
             "whatsapp_sent": whatsapp_sent,
-            "activecampaign_synced": ac_synced,
             "status": "confirmed",
             "created_at": datetime.now(timezone.utc).isoformat(),
         }

@@ -47,6 +47,7 @@
   });
   let agentLoading = $state(false);
 
+
   async function openAgentModal() {
     showAgentModal = true;
     if (agentInfo) return;
@@ -247,7 +248,10 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
         nodes: flowData.nodes,
         edges: flowData.edges,
         status: 'draft',
-        pricing_csv: store.pricingCsv
+        pricing_csv: store.pricingCsv,
+        activecampaign_list_id: store.acListId,
+        activecampaign_list_name: store.acListName,
+        theme_color: store.themeColor
       });
       const saved = await service.save(dto);
       if (saved?._id && !store.flowId) {
@@ -348,6 +352,11 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
         onDelete={() => store.removeNode(selectedNode.id)}
         onClose={() => store.selectedNodeId = null}
         {catalogItems}
+        acListId={store.acListId}
+        acListName={store.acListName}
+        onAcChange={(id, name) => { store.acListId = id; store.acListName = name; }}
+        themeColor={store.themeColor}
+        onThemeChange={(color) => { store.themeColor = color; }}
       />
     {/if}
   </div>
@@ -545,3 +554,4 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
     </div>
   </div>
 {/if}
+

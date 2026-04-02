@@ -74,6 +74,9 @@ export interface Flow {
   nodes: FlowNode[];
   edges: FlowEdge[];
   pricing_csv?: string;
+  activecampaign_list_id?: string;
+  activecampaign_list_name?: string;
+  theme_color?: string;
   created_at?: string;
   updated_at?: string;
 }

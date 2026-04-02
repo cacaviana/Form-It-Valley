@@ -25,6 +25,12 @@ class FlowRepository(BaseRepository):
     async def find_by_slug(self, slug: str) -> Optional[dict]:
         return await self._collection.find_one({"slug": slug})
 
+    async def count_slugs_starting_with(self, slug_prefix: str) -> int:
+        """Conta quantos flows tem slug que comeca com o prefixo (para gerar slug unico)."""
+        return await self._collection.count_documents({
+            "slug": {"$regex": f"^{slug_prefix}(-\\d+)?$"}
+        })
+
     async def insert(self, document: dict) -> dict:
         result = await self._collection.insert_one(document)
         document["_id"] = result.inserted_id

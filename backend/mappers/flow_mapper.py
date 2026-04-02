@@ -16,6 +16,9 @@ class FlowMapper:
             "nodes": doc.get("nodes", []),
             "edges": doc.get("edges", []),
             "pricing_csv": doc.get("pricing_csv", ""),
+            "activecampaign_list_id": doc.get("activecampaign_list_id", ""),
+            "activecampaign_list_name": doc.get("activecampaign_list_name", ""),
+            "theme_color": doc.get("theme_color", "violet"),
             "created_at": doc.get("created_at", ""),
             "updated_at": doc.get("updated_at", ""),
         }

@@ -27,6 +27,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Bibliotecas externas sao muito verbosas em DEBUG — manter em WARNING
+logging.getLogger("pymongo").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

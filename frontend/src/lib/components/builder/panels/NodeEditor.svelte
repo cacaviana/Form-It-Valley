@@ -3,13 +3,29 @@
   import type { FlowNodeData, QuestionType, FlowOption } from '$lib/dto/flows/types';
   import { authFetch } from '$lib/utils/auth-fetch';
 
-  let { node, onUpdate, onDelete, onClose, catalogItems = [] } = $props<{
+  let { node, onUpdate, onDelete, onClose, catalogItems = [], acListId = '', acListName = '', onAcChange = (_id: string, _name: string) => {}, themeColor = 'violet', onThemeChange = (_color: string) => {} } = $props<{
     node: Node;
     onUpdate: (data: Partial<FlowNodeData>) => void;
     onDelete: () => void;
     onClose: () => void;
-    catalogItems?: string[]; // Nomes dos produtos do CSV carregado
+    catalogItems?: string[];
+    acListId?: string;
+    acListName?: string;
+    onAcChange?: (listId: string, listName: string) => void;
+    themeColor?: string;
+    onThemeChange?: (color: string) => void;
   }>();
+
+  const themeColors = [
+    { id: 'violet', label: 'Roxo', color: '#7C3AED', light: '#EDE9FE' },
+    { id: 'blue', label: 'Azul', color: '#2563EB', light: '#DBEAFE' },
+    { id: 'emerald', label: 'Verde', color: '#059669', light: '#D1FAE5' },
+    { id: 'rose', label: 'Rosa', color: '#E11D48', light: '#FFE4E6' },
+    { id: 'orange', label: 'Laranja', color: '#EA580C', light: '#FFEDD5' },
+    { id: 'cyan', label: 'Ciano', color: '#0891B2', light: '#CFFAFE' },
+    { id: 'amber', label: 'Dourado', color: '#D97706', light: '#FEF3C7' },
+    { id: 'slate', label: 'Escuro', color: '#334155', light: '#F1F5F9' },
+  ];
 
   let data = $derived(node.data as FlowNodeData);
 
@@ -34,9 +50,19 @@
     });
   }
 
-  // ActiveCampaign lists
+  // ActiveCampaign lists — salva no nivel do Flow
   let acLists = $state<{ id: string; name: string; subscriber_count: number }[]>([]);
   let loadingAcLists = $state(false);
+
+  async function loadAcLists() {
+    if (acLists.length > 0) return;
+    loadingAcLists = true;
+    try {
+      const res = await authFetch('/api/activecampaign/lists');
+      if (res.ok) acLists = await res.json();
+    } catch (e) { /* silent */ }
+    loadingAcLists = false;
+  }
 
   async function loadTemplates() {
     if (waTemplates.length > 0) return;
@@ -48,15 +74,6 @@
     loadingTemplates = false;
   }
 
-  async function loadAcLists() {
-    if (acLists.length > 0) return;
-    loadingAcLists = true;
-    try {
-      const res = await authFetch('/api/activecampaign/lists');
-      if (res.ok) acLists = await res.json();
-    } catch (e) { /* silent */ }
-    loadingAcLists = false;
-  }
 
   // Carrega templates quando end type for scheduling
   $effect(() => {
@@ -72,10 +89,11 @@
     }
   });
 
+
   const placeholderOptions = [
     { value: '{{nome}}', label: 'Nome do lead' },
     { value: '{{data}}', label: 'Data do agendamento' },
-    { value: '{{horario}}', label: 'Horario do agendamento' },
+    { value: '{{horario}}', label: 'Horário do agendamento' },
     { value: '{{link}}', label: 'Link do Google Calendar' },
     { value: '{{email}}', label: 'E-mail do lead' },
     { value: '{{telefone}}', label: 'Telefone do lead' }
@@ -94,8 +112,8 @@
     if (tpl) {
       for (let i = 0; i < tpl.variableCount; i++) {
         if (i === 0) vars.push('{{nome}}');
-        else if (i === 1) vars.push('Seu atendimento na IT Valley foi confirmado! Data: {{data}} - Horario: {{horario}}');
-        else if (i === 2) vars.push('Link da reuniao: {{link}}');
+        else if (i === 1) vars.push('Seu atendimento na IT Valley foi confirmado! Data: {{data}} - Horário: {{horario}}');
+        else if (i === 2) vars.push('Link da reunião: {{link}}');
         else vars.push('');
       }
     }
@@ -443,17 +461,17 @@
             </svg>
             <div>
               <p class="text-xs font-semibold text-blue-800">Agendar Atendimento</p>
-              <p class="text-xs text-blue-700 mt-1">O lead escolhe data e horario no calendario. O agendamento e criado no Google Calendar, e o lead recebe um e-mail com o link da call e uma mensagem no WhatsApp.</p>
+              <p class="text-xs text-blue-700 mt-1">O lead escolhe data e horário no calendário. O agendamento é criado no Google Calendar, e o lead recebe um e-mail com o link da call e uma mensagem no WhatsApp.</p>
             </div>
           </div>
         </div>
         <div>
-          <label class="label">Mensagem de confirmacao</label>
+          <label class="label">Mensagem de confirmação</label>
           <textarea
             value={data.message || ''}
             oninput={(e) => onUpdate({ message: (e.target as HTMLTextAreaElement).value })}
             class="input h-20 resize-y"
-            placeholder="Ex: Escolha o melhor dia e horario para nossa conversa..."
+            placeholder="Ex: Escolha o melhor dia e horário para nossa conversa..."
           ></textarea>
         </div>
 
@@ -470,7 +488,7 @@
           {#if loadingTemplates}
             <div class="text-xs text-gray-400 py-2">Carregando templates...</div>
           {:else if waTemplates.length === 0}
-            <div class="text-xs text-gray-400 py-2">Nenhum template disponivel</div>
+            <div class="text-xs text-gray-400 py-2">Nenhum template disponível</div>
           {:else}
             <select
               value={data.whatsappTemplate || ''}
@@ -541,7 +559,7 @@
             </svg>
             <div>
               <p class="text-xs font-semibold text-green-800">Finalizar</p>
-              <p class="text-xs text-green-700 mt-1">O lead vera uma mensagem de agradecimento ao final do formulario.</p>
+              <p class="text-xs text-green-700 mt-1">O lead verá uma mensagem de agradecimento ao final do formulário.</p>
             </div>
           </div>
         </div>
@@ -556,7 +574,7 @@
         </div>
       {/if}
 
-      <!-- ActiveCampaign -->
+      <!-- ActiveCampaign — salva no nivel do Flow -->
       <div class="border-t border-gray-200 pt-4 mt-2">
         <div class="flex items-center gap-1.5 mb-3">
           <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
@@ -568,33 +586,30 @@
         {#if loadingAcLists}
           <div class="text-xs text-gray-400 py-2">Carregando listas...</div>
         {:else if acLists.length === 0}
-          <div class="text-xs text-gray-400 py-2">Nenhuma lista disponivel. Verifique as credenciais do ActiveCampaign.</div>
+          <div class="text-xs text-gray-400 py-2">Nenhuma lista disponível. Verifique as credenciais do ActiveCampaign.</div>
         {:else}
           <label class="text-xs text-gray-500 mb-1 block">Salvar lead na lista:</label>
           <select
-            value={data.activecampaignListId || ''}
+            value={acListId || ''}
             onchange={(e) => {
               const listId = (e.target as HTMLSelectElement).value;
               const list = acLists.find(l => l.id === listId);
-              onUpdate({
-                activecampaignListId: listId || undefined,
-                activecampaignListName: list?.name || undefined
-              });
+              onAcChange(listId || '', list?.name || '');
             }}
             class="input"
           >
-            <option value="">Nao salvar no ActiveCampaign</option>
+            <option value="">Não salvar no ActiveCampaign</option>
             {#each acLists as list}
               <option value={list.id}>{list.name} ({list.subscriber_count} contatos)</option>
             {/each}
           </select>
 
-          {#if data.activecampaignListId}
+          {#if acListId}
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
               <p class="text-xs text-blue-700">
                 O lead sera automaticamente cadastrado na lista
-                <strong>{data.activecampaignListName || data.activecampaignListId}</strong>
-                ao preencher o formulario.
+                <strong>{acListName || acListId}</strong>
+                ao clicar em "Começar" no formulário.
               </p>
             </div>
           {/if}
@@ -604,8 +619,26 @@
 
     <!-- ==================== START ==================== -->
     {#if node.type === 'start'}
-      <div class="bg-green-50 rounded-lg p-3 text-sm text-green-700">
-        Point d'entrée du flux. Collecte automatiquement : nom, email, téléphone et adresse du client.
+      <div class="bg-green-50 rounded-lg p-3 text-sm text-green-700 mb-4">
+        Ponto de entrada do fluxo. Coleta automaticamente: nome, e-mail, telefone e endereço do lead.
+      </div>
+
+      <!-- Cor do formulário -->
+      <div>
+        <label class="label">Cor do formulário</label>
+        <p class="text-xs text-gray-400 mb-3">Escolha a cor principal do formulário público</p>
+        <div class="grid grid-cols-4 gap-2">
+          {#each themeColors as tc}
+            <button
+              type="button"
+              onclick={() => onThemeChange(tc.id)}
+              class="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all cursor-pointer {themeColor === tc.id ? 'border-gray-900 shadow-sm' : 'border-transparent hover:bg-gray-50'}"
+            >
+              <div class="w-8 h-8 rounded-full shadow-sm" style="background: {tc.color};"></div>
+              <span class="text-[10px] font-medium text-gray-600">{tc.label}</span>
+            </button>
+          {/each}
+        </div>
       </div>
     {/if}
 

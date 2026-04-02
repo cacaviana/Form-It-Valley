@@ -57,13 +57,19 @@ export function createFlowBuilderStore() {
   let flowName = $state('Novo Fluxo');
   let flowId = $state<string | null>(null);
   let pricingCsv = $state('');
+  let acListId = $state('');
+  let acListName = $state('');
+  let themeColor = $state('violet');
   let selectedNodeId = $state<string | null>(null);
   let hasChanges = $state(false);
 
-  function loadFlow(flow: { _id?: string; name: string; nodes: FlowNode[]; edges: FlowEdge[]; pricing_csv?: string }) {
+  function loadFlow(flow: { _id?: string; name: string; nodes: FlowNode[]; edges: FlowEdge[]; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string }) {
     flowId = flow._id || null;
     flowName = flow.name;
     pricingCsv = flow.pricing_csv || '';
+    acListId = flow.activecampaign_list_id || '';
+    acListName = flow.activecampaign_list_name || '';
+    themeColor = flow.theme_color || 'violet';
     nodes = toSvelteFlowNodes(flow.nodes);
     edges = toSvelteFlowEdges(flow.edges);
     hasChanges = false;
@@ -139,6 +145,12 @@ export function createFlowBuilderStore() {
     set flowId(v: string | null) { flowId = v; },
     get pricingCsv() { return pricingCsv; },
     set pricingCsv(v: string) { pricingCsv = v; hasChanges = true; },
+    get acListId() { return acListId; },
+    set acListId(v: string) { acListId = v; hasChanges = true; },
+    get acListName() { return acListName; },
+    set acListName(v: string) { acListName = v; hasChanges = true; },
+    get themeColor() { return themeColor; },
+    set themeColor(v: string) { themeColor = v; hasChanges = true; },
     get selectedNodeId() { return selectedNodeId; },
     set selectedNodeId(v: string | null) { selectedNodeId = v; },
     get hasChanges() { return hasChanges; },

@@ -172,7 +172,7 @@
                     {@const dayNum = parseInt(cell.date.split('-')[2])}
                     <div class="aspect-square flex items-center justify-center text-xs rounded-lg m-0.5
                       {cell.available ? 'bg-green-50 text-green-800 font-medium' : 'text-gray-300'}"
-                      title={cell.available ? `${cell.slots_count} horarios livres` : 'Indisponivel'}
+                      title={cell.available ? `${cell.slots_count} horários livres` : 'Indisponível'}
                     >
                       {dayNum}
                       {#if cell.available && cell.slots_count > 0}
@@ -188,7 +188,7 @@
 
             <div class="mt-3 flex items-center gap-3 text-[10px] text-gray-400">
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-200"></span> Disponivel</span>
-              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-gray-200"></span> Indisponivel</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-gray-200"></span> Indisponível</span>
             </div>
           </div>
 
@@ -220,7 +220,7 @@
           {#if schedulingsDoMes.length === 0}
             <div class="bg-white rounded-xl border p-8 text-center">
               <p class="text-gray-500 text-sm">Nenhum agendamento realizado ainda.</p>
-              <p class="text-xs text-gray-400 mt-1">Os agendamentos aparecerao aqui quando leads preencherem os formularios.</p>
+              <p class="text-xs text-gray-400 mt-1">Os agendamentos aparecerão aqui quando leads preencherem os formulários.</p>
             </div>
           {:else}
             <div class="bg-white rounded-xl border overflow-hidden">

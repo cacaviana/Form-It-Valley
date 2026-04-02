@@ -58,8 +58,8 @@
     {:else}
       <div class="bg-white rounded-xl border p-6 space-y-6">
         <div>
-          <h2 class="text-base font-semibold text-gray-900 mb-1">Horarios disponiveis para agendamento</h2>
-          <p class="text-sm text-gray-500">Defina o maximo de horarios que o lead vai ver por periodo. Os horarios sao escolhidos aleatoriamente dentre os disponiveis.</p>
+          <h2 class="text-base font-semibold text-gray-900 mb-1">Horários disponíveis para agendamento</h2>
+          <p class="text-sm text-gray-500">Defina o máximo de horários que o lead vai ver por período. Os horários são escolhidos aleatoriamente dentre os disponíveis.</p>
         </div>
 
         <!-- Manha -->
@@ -68,10 +68,10 @@
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
             </svg>
-            <h3 class="font-semibold text-blue-900">Manha</h3>
+            <h3 class="font-semibold text-blue-900">Manhã</h3>
             <span class="text-xs text-blue-500 ml-auto">09:00 - 11:30</span>
           </div>
-          <label class="block text-sm text-blue-800 mb-2">Maximo de horarios para o lead</label>
+          <label class="block text-sm text-blue-800 mb-2">Máximo de horários para o lead</label>
           <div class="flex items-center gap-3">
             <input
               type="range"
@@ -82,7 +82,7 @@
             />
             <span class="text-2xl font-bold text-blue-700 w-8 text-center">{morningSlots}</span>
           </div>
-          <p class="text-xs text-blue-600 mt-2">De ate {morningHours.length} horarios livres, o lead vera no maximo {morningSlots} (aleatorios)</p>
+          <p class="text-xs text-blue-600 mt-2">De até {morningHours.length} horários livres, o lead verá no máximo {morningSlots} (aleatórios)</p>
         </div>
 
         <!-- Tarde -->
@@ -94,7 +94,7 @@
             <h3 class="font-semibold text-orange-900">Tarde</h3>
             <span class="text-xs text-orange-500 ml-auto">14:00 - 17:30</span>
           </div>
-          <label class="block text-sm text-orange-800 mb-2">Maximo de horarios para o lead</label>
+          <label class="block text-sm text-orange-800 mb-2">Máximo de horários para o lead</label>
           <div class="flex items-center gap-3">
             <input
               type="range"
@@ -105,14 +105,14 @@
             />
             <span class="text-2xl font-bold text-orange-700 w-8 text-center">{afternoonSlots}</span>
           </div>
-          <p class="text-xs text-orange-600 mt-2">De ate {afternoonHours.length} horarios livres, o lead vera no maximo {afternoonSlots} (aleatorios)</p>
+          <p class="text-xs text-orange-600 mt-2">De até {afternoonHours.length} horários livres, o lead verá no máximo {afternoonSlots} (aleatórios)</p>
         </div>
 
         <!-- Resumo -->
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p class="text-sm text-gray-700">
-            O lead vera no maximo <strong>{morningSlots + afternoonSlots} horarios</strong> por dia
-            ({morningSlots} de manha + {afternoonSlots} de tarde), escolhidos aleatoriamente.
+            O lead verá no máximo <strong>{morningSlots + afternoonSlots} horários</strong> por dia
+            ({morningSlots} de manhã + {afternoonSlots} de tarde), escolhidos aleatoriamente.
           </p>
         </div>
 

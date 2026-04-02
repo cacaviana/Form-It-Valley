@@ -123,7 +123,7 @@
       <div class="h-5 w-px bg-gray-200"></div>
       <div>
         <h1 class="text-sm font-bold text-gray-900">Previa: {flow?.name || '...'}</h1>
-        <p class="text-xs text-gray-500">Simulacao do formulario — como o lead vai ver</p>
+        <p class="text-xs text-gray-500">Simulação do formulário — como o lead vai ver</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -143,7 +143,7 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
         </svg>
-        Editar formulario
+        Editar formulário
       </button>
       {#if flow?.slug}
         <a
@@ -276,9 +276,9 @@
                   </svg>
                 </div>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">{endNode.data.title}</h3>
-                <p class="text-sm text-gray-600 mb-2">{endNode.data.message || 'Aqui o lead vera o calendario para agendar.'}</p>
+                <p class="text-sm text-gray-600 mb-2">{endNode.data.message || 'Aqui o lead verá o calendário para agendar.'}</p>
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
-                  (Preview) O calendario de agendamento aparecera aqui no formulario real.
+                  (Preview) O calendário de agendamento aparecerá aqui no formulário real.
                 </div>
               </div>
             {:else}

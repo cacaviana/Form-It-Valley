@@ -34,6 +34,14 @@ class FlowService:
 
     async def create(self, data: dict) -> dict:
         flow_doc = self._factory.create_new(data)
+
+        # Garantir slug unico — se ja existe, adiciona sufixo numerico
+        base_slug = flow_doc["slug"]
+        existing = await self._repository.find_by_slug(base_slug)
+        if existing:
+            count = await self._repository.count_slugs_starting_with(base_slug)
+            flow_doc["slug"] = f"{base_slug}-{count}"
+
         saved = await self._repository.insert(flow_doc)
         return self._mapper.to_response(saved)
 

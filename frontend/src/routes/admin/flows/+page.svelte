@@ -30,7 +30,7 @@
     archived: 'bg-gray-100 text-gray-600'
   };
   const statusLabels: Record<string, string> = {
-    draft: 'Rascunho',
+    draft: '',
     published: 'Publicado',
     archived: 'Arquivado'
   };
@@ -75,7 +75,9 @@
             <button onclick={() => goto(`/admin/flows/${flow._id}/edit`)} class="w-full text-left p-5 pb-3 cursor-pointer">
               <div class="flex justify-between items-start mb-2">
                 <h3 class="font-semibold text-gray-900 text-sm">{flow.name}</h3>
-                <span class="text-xs px-2 py-0.5 rounded-full {statusColors[flow.status]}">{statusLabels[flow.status] || flow.status}</span>
+                {#if flow.status !== 'draft'}
+                  <span class="text-xs px-2 py-0.5 rounded-full {statusColors[flow.status]}">{statusLabels[flow.status] || flow.status}</span>
+                {/if}
               </div>
               <p class="text-xs text-gray-500">/q/{flow.slug}</p>
             </button>

@@ -52,6 +52,10 @@ class FlowFactory:
         }
         if data.get("pricing_csv") is not None:
             doc["pricing_csv"] = data["pricing_csv"]
+        if data.get("activecampaign_list_id") is not None:
+            doc["activecampaign_list_id"] = data["activecampaign_list_id"]
+            doc["activecampaign_list_name"] = data.get("activecampaign_list_name", "")
+        doc["theme_color"] = data.get("theme_color", "violet")
         return doc
 
     @classmethod
@@ -81,4 +85,14 @@ class FlowFactory:
             update_doc["pricing_csv"] = data["pricing_csv"]
         elif existing.get("pricing_csv"):
             update_doc["pricing_csv"] = existing["pricing_csv"]
+        # Preserve or update activecampaign
+        ac_id = data.get("activecampaign_list_id")
+        if ac_id is not None:
+            # Frontend enviou o campo (pode ser "" para limpar ou "123" para setar)
+            update_doc["activecampaign_list_id"] = ac_id
+            update_doc["activecampaign_list_name"] = data.get("activecampaign_list_name", "")
+        elif existing.get("activecampaign_list_id"):
+            update_doc["activecampaign_list_id"] = existing["activecampaign_list_id"]
+            update_doc["activecampaign_list_name"] = existing.get("activecampaign_list_name", "")
+        update_doc["theme_color"] = data.get("theme_color") or existing.get("theme_color", "violet")
         return update_doc
