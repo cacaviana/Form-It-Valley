@@ -183,6 +183,13 @@ class GCalService:
                 if is_free:
                     available.append(slot)
 
+            # Filtra horarios que ja passaram se a data for hoje
+            from zoneinfo import ZoneInfo
+            now = datetime.now(ZoneInfo("America/Sao_Paulo"))
+            if date_str == now.strftime("%Y-%m-%d"):
+                current_time = now.strftime("%H:%M")
+                available = [s for s in available if s > current_time]
+
             return self._apply_slots_limit(available, morning_limit, afternoon_limit)
 
         except Exception as e:
