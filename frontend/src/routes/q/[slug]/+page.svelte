@@ -413,14 +413,7 @@
 
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden" style="font-weight: 400; background: radial-gradient(circle at 20% 10%, #1f1440 0%, #0f0a1a 40%, #080510 100%); --tc: {theme.main};">
-  <!-- Fallback image (aparece enquanto video carrega) -->
-  <img src="/bg-fallback.png" alt="" class="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none" aria-hidden="true" />
-  <!-- Video de fundo -->
-  <video autoplay muted loop playsinline poster="/bg-fallback.png" class="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none" aria-hidden="true">
-    <source src="/bg-video.mp4" type="video/mp4" />
-  </video>
-  <div class="absolute inset-0 bg-black/40 pointer-events-none"></div>
+<div class="min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden" style="font-weight: 400; background: #000000; --tc: {theme.main};">
   <div class="relative z-10 max-w-[460px] w-full text-base">
 
     {#if loading}
