@@ -209,7 +209,7 @@ class GCalService:
 
             import uuid
             event = {
-                "summary": f"Call Vendas - {lead_name}",
+                "summary": f"Call Consultor IT Valley - {lead_name}",
                 "description": f"Lead: {lead_name}\nEmail: {lead_email}\nTelefone: {lead_phone or 'N/A'}\n\nAgendado via FormItValley",
                 "start": {
                     "dateTime": f"{scheduled_date}T{scheduled_time}:00",

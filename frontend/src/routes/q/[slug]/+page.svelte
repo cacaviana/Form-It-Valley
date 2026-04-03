@@ -572,11 +572,12 @@
       </div>
 
     {:else if phase === 'questions' && currentNode}
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
       <!-- Progress -->
-      <div class="bg-white/[0.03] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10">
-        <span class="text-sm font-medium text-gray-400">Pergunta {answeredCount + 1} / {totalQuestions}</span>
+      <div class="bg-gray-100/80 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/80">
+        <span class="text-sm font-medium text-gray-500">Pergunta {answeredCount + 1} / {totalQuestions}</span>
         <div class="flex items-center gap-2">
-          <div class="w-28 bg-white/10 rounded-full h-2">
+          <div class="w-28 bg-gray-200 rounded-full h-2">
             <div class="h-2 rounded-full transition-all duration-300" style="width: {progressPercent}%; background: {theme.gradient}"></div>
           </div>
           <span class="text-sm text-gray-500">{progressPercent}%</span>
@@ -591,11 +592,11 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 class="text-xl font-semibold text-white mb-3">{currentNode.data.title}</h3>
-            <p class="text-base text-gray-400">{currentNode.data.message}</p>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">{currentNode.data.title}</h3>
+            <p class="text-base text-gray-500">{currentNode.data.message}</p>
           </div>
         {:else}
-          <h3 class="text-xl font-semibold text-white mb-2">{currentNode.data.title}</h3>
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">{currentNode.data.title}</h3>
 
           {#if currentNode.data.tooltip}
             <p class="text-sm text-gray-500 mb-5">{currentNode.data.tooltip}</p>
@@ -608,7 +609,7 @@
               {#each currentNode.data.options as opt}
                 <button
                   onclick={() => selectAnswer(opt.value, opt.id, opt.label)}
-                  class="border-2 border-white/10 rounded-xl px-4 py-4 text-center text-base font-medium text-gray-300 hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-white transition-all cursor-pointer"
+                  class="border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-base font-medium text-gray-700 hover:border-violet-500/50 hover:bg-violet-50 hover:text-gray-900 transition-all cursor-pointer"
                 >
                   {opt.label}
                 </button>
@@ -618,13 +619,13 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onclick={() => selectAnswer('Oui', 'yes')}
-                class="border-2 border-white/10 rounded-xl px-4 py-5 text-center text-lg font-medium text-gray-300 hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-white transition-all cursor-pointer"
+                class="border-2 border-gray-200 rounded-xl px-4 py-5 text-center text-lg font-medium text-gray-700 hover:border-violet-500/50 hover:bg-violet-50 hover:text-gray-900 transition-all cursor-pointer"
               >
                 Sim
               </button>
               <button
                 onclick={() => selectAnswer('Non', 'no')}
-                class="border-2 border-white/10 rounded-xl px-4 py-5 text-center text-lg font-medium text-gray-300 hover:border-red-500/50 hover:bg-red-500/10 hover:text-white transition-all cursor-pointer"
+                class="border-2 border-gray-200 rounded-xl px-4 py-5 text-center text-lg font-medium text-gray-700 hover:border-red-500/50 hover:bg-red-50 hover:text-gray-900 transition-all cursor-pointer"
               >
                 Não
               </button>
@@ -634,7 +635,7 @@
               <input
                 type="number"
                 bind:value={inputValue}
-                class="flex-1 bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none"
+                class="flex-1 bg-gray-50/70 border border-gray-200/90 rounded-xl px-4 py-3 text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none"
                 placeholder="Digite um número"
               />
               <button
@@ -651,7 +652,7 @@
               <input
                 type="text"
                 bind:value={inputValue}
-                class="flex-1 bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 outline-none"
+                class="flex-1 bg-gray-50/70 border border-gray-200/90 rounded-xl px-4 py-3 text-base text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none"
                 placeholder="Sua resposta"
               />
               <button
@@ -668,7 +669,7 @@
 
         <button
           onclick={goBack}
-          class="mt-6 text-sm text-gray-500 hover:text-gray-300 cursor-pointer transition-colors flex items-center gap-1.5"
+          class="mt-6 text-sm text-gray-500 hover:text-gray-700 cursor-pointer transition-colors flex items-center gap-1.5"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -676,14 +677,15 @@
           Voltar
         </button>
       </div>
+      </div>
 
     {:else if phase === 'end' && endNode}
-
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
       {#if submitting}
         <div class="p-5 sm:p-8">
           <div class="text-center py-8">
             <div class="w-12 h-12 border-3 border-t-transparent" style="border-color: var(--tc); border-top-color: transparent; rounded-full animate-spin mx-auto mb-5"></div>
-            <p class="text-base text-white font-semibold">Processando suas respostas...</p>
+            <p class="text-base text-gray-800 font-semibold">Processando suas respostas...</p>
             <p class="text-sm text-gray-500 mt-2">Aguarde um momento</p>
           </div>
         </div>
@@ -695,13 +697,15 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
             </svg>
           </div>
-          <h3 class="text-lg font-bold text-white mb-2">{endNode.data.title}</h3>
-          <p class="text-sm text-gray-400">{resultText}</p>
+          <h3 class="text-lg font-bold text-gray-800 mb-2">{endNode.data.title}</h3>
+          <p class="text-sm text-gray-500">{resultText}</p>
         </div>
       {/if}
+      </div>
 
     <!-- ==================== SCHEDULING ==================== -->
     {:else if phase === 'scheduling'}
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
 
       {#if schedulingStep === 'calendar'}
         <div class="p-4 sm:p-6">
@@ -711,27 +715,27 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-white">Escolha o dia</h3>
-            <p class="text-sm text-gray-400">{endNode?.data.message || 'Selecione uma data disponível'}</p>
+            <h3 class="text-lg font-bold text-gray-800">Escolha o dia</h3>
+            <p class="text-sm text-gray-500">{endNode?.data.message || 'Selecione uma data disponível'}</p>
           </div>
 
           <!-- Calendar -->
-          <div class="border border-white/10 rounded-xl overflow-hidden">
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
             <!-- Month nav -->
-            <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-white/[0.03] border-b border-white/10">
+            <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border-b border-gray-200">
               <button onclick={prevCalMonth} disabled={!canGoPrev} aria-label="Mês anterior" class="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer transition-colors">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
-              <span class="text-xs sm:text-sm font-semibold text-white">{monthNames[calMonth]} {calYear}</span>
+              <span class="text-xs sm:text-sm font-semibold text-gray-800">{monthNames[calMonth]} {calYear}</span>
               <button onclick={nextCalMonth} aria-label="Próximo mês" class="p-1.5 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
             </div>
 
             <!-- Weekday headers -->
-            <div class="grid grid-cols-7 border-b border-white/10">
+            <div class="grid grid-cols-7 border-b border-gray-200">
               {#each weekdays as wd}
-                <div class="py-2 text-center text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase">{wd}</div>
+                <div class="py-2 text-center text-[9px] sm:text-[10px] font-semibold text-gray-500 uppercase">{wd}</div>
               {/each}
             </div>
 
@@ -756,8 +760,8 @@
                     {selectedDate === dateStr
                       ? 'text-white shadow-md scale-110" style="background: var(--tc);'
                       : avail
-                        ? 'text-gray-300 hover:bg-violet-500/10 hover:text-violet-400 cursor-pointer'
-                        : 'text-gray-600 cursor-not-allowed'}"
+                        ? 'text-gray-700 hover:bg-violet-500/10 hover:text-violet-600 cursor-pointer'
+                        : 'text-gray-300 cursor-not-allowed'}"
                   >
                     {day}
                     {#if isToday && selectedDate !== dateStr}
@@ -778,7 +782,7 @@
       {:else if schedulingStep === 'time'}
         <div class="p-4 sm:p-6">
           <div class="text-center mb-5">
-            <h3 class="text-lg font-bold text-white">Escolha o horário</h3>
+            <h3 class="text-lg font-bold text-gray-800">Escolha o horário</h3>
             <p class="text-sm text-gray-500 capitalize">{formatDateBR(selectedDate)}</p>
           </div>
 
@@ -796,7 +800,7 @@
                     <button
                       onclick={() => selectTime(slot)}
                       class="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer
-                      {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-white/10 text-gray-300 hover:border-white/20 hover:bg-white/[0.05]'}"
+                      {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}"
                     >{slot}</button>
                   {/each}
                 </div>
@@ -811,7 +815,7 @@
                     <button
                       onclick={() => selectTime(slot)}
                       class="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer
-                      {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-white/10 text-gray-300 hover:border-white/20 hover:bg-white/[0.05]'}"
+                      {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}"
                     >{slot}</button>
                   {/each}
                 </div>
@@ -840,19 +844,19 @@
       {:else if schedulingStep === 'confirm'}
         <div class="p-4 sm:p-6">
           <div class="text-center mb-5">
-            <h3 class="text-lg font-bold text-white">Confirme seu agendamento</h3>
-            <p class="text-sm text-gray-400">Verifique os dados antes de confirmar</p>
+            <h3 class="text-lg font-bold text-gray-800">Confirme seu agendamento</h3>
+            <p class="text-sm text-gray-500">Verifique os dados antes de confirmar</p>
           </div>
 
-          <div class="bg-white/[0.05] rounded-xl p-4 sm:p-5 space-y-3 mb-5 border border-white/10">
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Nome</span><span class="text-sm font-medium text-white break-words sm:text-right">{clientData.name}</span></div>
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">E-mail</span><span class="text-sm font-medium text-white break-all sm:text-right">{clientData.email}</span></div>
+          <div class="bg-gray-50 rounded-xl p-4 sm:p-5 space-y-3 mb-5 border border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Nome</span><span class="text-sm font-medium text-gray-800 break-words sm:text-right">{clientData.name}</span></div>
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">E-mail</span><span class="text-sm font-medium text-gray-800 break-all sm:text-right">{clientData.email}</span></div>
             {#if clientData.phone}
-              <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Telefone</span><span class="text-sm font-medium text-white break-words sm:text-right">+{clientData.phoneCountryCode} ({clientData.phoneDDD}) {clientData.phone}</span></div>
+              <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Telefone</span><span class="text-sm font-medium text-gray-800 break-words sm:text-right">+{clientData.phoneCountryCode} ({clientData.phoneDDD}) {clientData.phone}</span></div>
             {/if}
-            <hr class="border-white/10" />
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Data</span><span class="text-sm font-medium text-white capitalize sm:text-right">{formatDateBR(selectedDate)}</span></div>
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Horario</span><span class="text-sm font-medium text-white sm:text-right">{selectedTime}</span></div>
+            <hr class="border-gray-200" />
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Data</span><span class="text-sm font-medium text-gray-800 capitalize sm:text-right">{formatDateBR(selectedDate)}</span></div>
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1"><span class="text-xs text-gray-500">Horario</span><span class="text-sm font-medium text-gray-800 sm:text-right">{selectedTime}</span></div>
           </div>
 
           <button
@@ -883,17 +887,17 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-white mb-2">Agendamento Confirmado!</h3>
-          <p class="text-sm text-gray-400 mb-4">{schedulingResult?.message || 'Você receberá uma confirmação em breve.'}</p>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">Agendamento Confirmado!</h3>
+          <p class="text-sm text-gray-500 mb-4">{schedulingResult?.message || 'Você receberá uma confirmação em breve.'}</p>
 
           <div class="border" style="background: color-mix(in srgb, var(--tc) 10%, transparent); border-color: color-mix(in srgb, var(--tc) 20%, transparent); rounded-xl p-4 text-left space-y-2 mb-4">
             <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
               <span class="text-xs" style="color: var(--tc);">Data</span>
-              <span class="text-sm font-semibold text-white capitalize sm:text-right">{formatDateBR(selectedDate)}</span>
+              <span class="text-sm font-semibold text-gray-800 capitalize sm:text-right">{formatDateBR(selectedDate)}</span>
             </div>
             <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
               <span class="text-xs" style="color: var(--tc);">Horario</span>
-              <span class="text-sm font-semibold text-white sm:text-right">{selectedTime}</span>
+              <span class="text-sm font-semibold text-gray-800 sm:text-right">{selectedTime}</span>
             </div>
           </div>
 
@@ -929,6 +933,7 @@
           <p class="text-xs text-gray-500">Obrigado, {clientData.name}!</p>
         </div>
       {/if}
+      </div>
 
     {/if}
   </div>
