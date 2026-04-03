@@ -69,7 +69,13 @@
     loadingTemplates = true;
     try {
       const res = await authFetch('/api/whatsapp-templates');
-      if (res.ok) waTemplates = await res.json();
+      if (res.ok) {
+        waTemplates = await res.json();
+        // Auto-seleciona "agendamentos" como default se nenhum template estiver escolhido
+        if (!data.whatsappTemplate && waTemplates.some(t => t.name === 'agendamentos')) {
+          onTemplateChange('agendamentos');
+        }
+      }
     } catch (e) { /* silent */ }
     loadingTemplates = false;
   }
