@@ -241,13 +241,13 @@
       }, 2500);
     } else if (currentNode.type === 'end') {
       endNode = currentNode;
+      submitToBackend();
       if (currentNode.data.endType === 'scheduling') {
         phase = 'scheduling';
         schedulingStep = 'calendar';
         loadAvailableDates(calMonth + 1, calYear);
       } else {
         phase = 'end';
-        submitToBackend();
       }
     }
   }

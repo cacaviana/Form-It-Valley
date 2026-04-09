@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { authFetch } from '$lib/utils/auth-fetch';
 
   interface SubmissionSummary {
     id: string;
@@ -19,7 +20,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/submissions');
+      const res = await authFetch('/api/submissions');
       if (res.ok) {
         const data = await res.json();
         submissions = data.submissions;

@@ -19,6 +19,7 @@ from routers.public import router as public_router
 from routers.users import router as users_router
 from routers.scheduling_config import router as scheduling_config_router
 from routers.whatsapp import router as whatsapp_router
+from routers.submission import router as submission_router
 import logging
 
 logging.basicConfig(
@@ -107,6 +108,7 @@ app.include_router(scheduling_router, **protected)
 app.include_router(users_router, **protected)
 app.include_router(scheduling_config_router, **protected)
 app.include_router(whatsapp_router, **protected)
+app.include_router(submission_router, **protected)
 
 
 if __name__ == "__main__":

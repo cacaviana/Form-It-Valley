@@ -23,8 +23,8 @@ class SubmissionService:
 
     async def list_by_flow(self, flow_id: str) -> dict:
         docs = await self._repository.find_by_flow(flow_id)
-        summaries = [self._mapper.to_summary(doc) for doc in docs]
-        return {"submissions": summaries, "total": len(summaries)}
+        items = [self._mapper.to_response(doc) for doc in docs]
+        return {"submissions": items, "total": len(items)}
 
     async def get_by_id(self, id: str) -> Optional[dict]:
         doc = await self._repository.find_by_id(id)

@@ -2,6 +2,7 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { authFetch } from '$lib/utils/auth-fetch';
 
   interface Submission {
     id: string;
@@ -12,7 +13,7 @@
     client_email: string;
     client_phone: string | null;
     client_address: string | null;
-    answers: { node_id: string; question: string; value: string }[];
+    answers: { node_id: string; question: string; value: string; label?: string }[];
     end_node_id: string;
     end_type: string;
     status: string;
@@ -25,7 +26,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch(`/api/submissions/${page.params.id}`);
+      const res = await authFetch(`/api/submissions/${page.params.id}`);
       if (res.ok) {
         submission = await res.json();
       } else {
@@ -91,7 +92,7 @@
             {#each submission.answers as answer, i}
               <div class="text-sm border-b border-gray-100 pb-2 last:border-0 last:pb-0">
                 <p class="text-gray-500 text-xs">{i + 1}. {answer.question}</p>
-                <p class="font-medium text-gray-900">{answer.value}</p>
+                <p class="font-medium text-gray-900">{answer.label || answer.value}</p>
               </div>
             {/each}
           </div>

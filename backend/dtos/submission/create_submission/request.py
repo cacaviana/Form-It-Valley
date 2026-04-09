@@ -6,6 +6,7 @@ class SubmissionAnswer(BaseModel):
     node_id: str
     question: str
     value: str
+    label: Optional[str] = None
 
 
 class CreateSubmissionRequest(BaseModel):
