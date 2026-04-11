@@ -4,6 +4,7 @@
   import { FlowsService } from '$lib/services/flows.service';
   import { SubmissionsService } from '$lib/services/submissions.service';
   import type { Flow, FlowNode, FlowEdge } from '$lib/dto/flows/types';
+  import { trackUtms } from '$lib/utils/utm-tracking';
 
   const flowService = new FlowsService();
   const submissionService = new SubmissionsService();
@@ -193,6 +194,7 @@
     } finally {
       loading = false;
     }
+    trackUtms();
   });
 
   async function startQuestions() {
