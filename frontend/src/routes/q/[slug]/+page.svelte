@@ -4,7 +4,7 @@
   import { FlowsService } from '$lib/services/flows.service';
   import { SubmissionsService } from '$lib/services/submissions.service';
   import type { Flow, FlowNode, FlowEdge } from '$lib/dto/flows/types';
-  import { trackUtms } from '$lib/utils/utm-tracking';
+  import utmTrackingScript from '$lib/scripts/utm-tracking.js?raw';
 
   const flowService = new FlowsService();
   const submissionService = new SubmissionsService();
@@ -194,7 +194,13 @@
     } finally {
       loading = false;
     }
-    trackUtms();
+
+    if (!(window as any).__utmTrackingInjected) {
+      (window as any).__utmTrackingInjected = true;
+      const s = document.createElement('script');
+      s.textContent = utmTrackingScript;
+      document.body.appendChild(s);
+    }
   });
 
   async function startQuestions() {
