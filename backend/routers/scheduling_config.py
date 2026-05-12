@@ -10,6 +10,7 @@ CONFIG_ID = "scheduling_config"
 class SchedulingConfigRequest(BaseModel):
     morning_slots: int = 3
     afternoon_slots: int = 3
+    max_bookings_per_slot: int = 1
 
 
 @router.get("")
@@ -20,6 +21,7 @@ async def get_config():
     return {
         "morning_slots": config.get("morning_slots", 3) if config else 3,
         "afternoon_slots": config.get("afternoon_slots", 3) if config else 3,
+        "max_bookings_per_slot": config.get("max_bookings_per_slot", 1) if config else 1,
     }
 
 
@@ -28,14 +30,21 @@ async def update_config(request: SchedulingConfigRequest):
     """Atualiza config de horarios disponiveis."""
     from datetime import datetime, timezone
 
+    max_bookings = max(1, request.max_bookings_per_slot)
+
     db = mongodb_client.database
     await db["settings"].update_one(
         {"_id": CONFIG_ID},
         {"$set": {
             "morning_slots": request.morning_slots,
             "afternoon_slots": request.afternoon_slots,
+            "max_bookings_per_slot": max_bookings,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }},
         upsert=True,
     )
-    return {"morning_slots": request.morning_slots, "afternoon_slots": request.afternoon_slots}
+    return {
+        "morning_slots": request.morning_slots,
+        "afternoon_slots": request.afternoon_slots,
+        "max_bookings_per_slot": max_bookings,
+    }

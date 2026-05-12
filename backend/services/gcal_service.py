@@ -39,16 +39,20 @@ class GCalService:
     def _get_calendar_id(self) -> str:
         return settings.google_calendar_id or "primary"
 
-    async def _get_slots_config(self) -> tuple[int, int]:
-        """Retorna (morning_slots, afternoon_slots) da config no MongoDB."""
+    async def _get_slots_config(self) -> tuple[int, int, int]:
+        """Retorna (morning_slots, afternoon_slots, max_bookings_per_slot) da config no MongoDB."""
         try:
             db = mongodb_client.database
             config = await db["settings"].find_one({"_id": "scheduling_config"})
             if config:
-                return config.get("morning_slots", 3), config.get("afternoon_slots", 3)
+                return (
+                    config.get("morning_slots", 3),
+                    config.get("afternoon_slots", 3),
+                    max(1, config.get("max_bookings_per_slot", 1)),
+                )
         except Exception:
             pass
-        return 3, 3
+        return 3, 3, 1
 
     def _apply_slots_limit(self, available: list[str], morning_limit: int, afternoon_limit: int) -> list[str]:
         """Limita horarios disponiveis conforme config, escolhendo aleatoriamente."""
@@ -98,8 +102,9 @@ class GCalService:
         """Retorna dias do mes com disponibilidade."""
         days_in_month = cal_mod.monthrange(year, month)[1]
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        morning_limit, afternoon_limit = await self._get_slots_config()
+        morning_limit, afternoon_limit, max_bookings = await self._get_slots_config()
         max_slots = morning_limit + afternoon_limit
+        total_capacity = ALL_SLOTS_COUNT * max_bookings
 
         try:
             cal_id = self._get_calendar_id()
@@ -122,7 +127,7 @@ class GCalService:
                 is_weekday = d.weekday() < 5
                 is_future = d >= today
                 day_events = events_per_day.get(date_str, 0)
-                real_free = max(0, ALL_SLOTS_COUNT - day_events)
+                real_free = max(0, total_capacity - day_events)
                 visible_slots = min(real_free, max_slots)
 
                 dates.append({
@@ -143,7 +148,7 @@ class GCalService:
                 dates.append({
                     "date": date_str,
                     "available": is_weekday and is_future,
-                    "slots_count": min(ALL_SLOTS_COUNT, max_slots) if (is_weekday and is_future) else 0,
+                    "slots_count": min(total_capacity, max_slots) if (is_weekday and is_future) else 0,
                 })
             return dates
 
@@ -151,7 +156,7 @@ class GCalService:
         """Retorna horarios disponiveis para uma data, limitados pela config."""
         try:
             cal_id = self._get_calendar_id()
-            morning_limit, afternoon_limit = await self._get_slots_config()
+            morning_limit, afternoon_limit, max_bookings = await self._get_slots_config()
 
             events = await asyncio.to_thread(
                 self._sync_list_events, cal_id,
@@ -175,12 +180,10 @@ class GCalService:
                 end_m = (m + 30) % 60
                 slot_end = f"{str(end_h).zfill(2)}:{str(end_m).zfill(2)}"
 
-                is_free = True
-                for b in busy:
-                    if slot < b["end"] and slot_end > b["start"]:
-                        is_free = False
-                        break
-                if is_free:
+                overlap_count = sum(
+                    1 for b in busy if slot < b["end"] and slot_end > b["start"]
+                )
+                if overlap_count < max_bookings:
                     available.append(slot)
 
             # Filtra horarios que ja passaram se a data for hoje
