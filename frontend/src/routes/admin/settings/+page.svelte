@@ -85,7 +85,9 @@
             />
             <span class="text-2xl font-bold text-blue-700 w-8 text-center">{morningSlots}</span>
           </div>
-          <p class="text-xs text-blue-600 mt-2">De até {morningHours.length} horários livres, o lead verá no máximo {morningSlots} (aleatórios)</p>
+          <p class="text-xs text-blue-600 mt-2">
+            {morningHours.length} horários possíveis pela manhã (cada um aceita até {Math.max(1, maxBookingsPerSlot)} agendamento{maxBookingsPerSlot > 1 ? 's' : ''}); o lead verá no máximo {morningSlots} (aleatórios)
+          </p>
         </div>
 
         <!-- Tarde -->
@@ -108,7 +110,9 @@
             />
             <span class="text-2xl font-bold text-orange-700 w-8 text-center">{afternoonSlots}</span>
           </div>
-          <p class="text-xs text-orange-600 mt-2">De até {afternoonHours.length} horários livres, o lead verá no máximo {afternoonSlots} (aleatórios)</p>
+          <p class="text-xs text-orange-600 mt-2">
+            {afternoonHours.length} horários possíveis pela tarde (cada um aceita até {Math.max(1, maxBookingsPerSlot)} agendamento{maxBookingsPerSlot > 1 ? 's' : ''}); o lead verá no máximo {afternoonSlots} (aleatórios)
+          </p>
         </div>
 
         <!-- Multi-booking -->
