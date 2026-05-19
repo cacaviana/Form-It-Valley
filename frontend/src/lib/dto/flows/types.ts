@@ -1,4 +1,4 @@
-export type NodeType = 'start' | 'question' | 'message' | 'end';
+export type NodeType = 'start' | 'question' | 'message' | 'end' | 'blacklist';
 
 export type QuestionType =
   | 'single_choice'
@@ -47,6 +47,10 @@ export interface FlowNodeData {
   // ActiveCampaign
   activecampaignListId?: string;
   activecampaignListName?: string;
+  // Blacklist node
+  blockedMessage?: string;
+  blacklistTotalEntries?: number;
+  blacklistUploadedAt?: string;
 }
 
 export interface FlowNode {

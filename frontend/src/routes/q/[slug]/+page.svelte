@@ -27,7 +27,8 @@
   let theme = $derived(colorMap[flow?.theme_color || 'violet'] || colorMap.violet);
 
   // Executor state
-  let phase = $state<'form' | 'questions' | 'end' | 'scheduling'>('form');
+  let phase = $state<'form' | 'questions' | 'end' | 'scheduling' | 'blocked'>('form');
+  let blockedMessage = $state('');
   let clientData = $state({ name: '', email: '', phone: '', address: '', phoneCountryCode: '55', phoneDDD: '' });
 
   // Paises com bandeira (flagcdn.com)
@@ -237,9 +238,41 @@
     }
   }
 
-  function processCurrentNode() {
+  async function processCurrentNode() {
     if (!currentNode) return;
-    if (currentNode.type === 'message') {
+    if (currentNode.type === 'blacklist') {
+      // Bloqueador de lead: chama o backend antes de seguir o fluxo
+      const defaultMsg = 'Desculpe, você não pode agendar uma reunião.';
+      try {
+        const ddd = clientData.phoneDDD.replace(/\D/g, '');
+        const numero = clientData.phone.replace(/\D/g, '');
+        const res = await fetch('/api/public/blacklist/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            flow_id: flow?._id || '',
+            email: clientData.email,
+            ddi: clientData.phoneCountryCode,
+            ddd,
+            numero
+          })
+        });
+        const data = await res.json();
+        if (data?.blocked) {
+          blockedMessage = currentNode.data.blockedMessage || defaultMsg;
+          phase = 'blocked';
+          return;
+        }
+      } catch {
+        // Em caso de erro de rede, deixa passar (fail-open) pra nao quebrar o fluxo
+      }
+      // Nao bloqueou — segue pra proxima
+      const edge = flow!.edges.find(e => e.source === currentNodeId);
+      if (edge) {
+        currentNodeId = edge.target;
+        processCurrentNode();
+      }
+    } else if (currentNode.type === 'message') {
       setTimeout(() => {
         const edge = flow!.edges.find(e => e.source === currentNodeId);
         if (edge) {
@@ -678,6 +711,18 @@
           Voltar
         </button>
       </div>
+      </div>
+
+    {:else if phase === 'blocked'}
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
+        <div class="p-5 sm:p-8 text-center">
+          <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <p class="text-base text-gray-800 leading-relaxed">{blockedMessage}</p>
+        </div>
       </div>
 
     {:else if phase === 'end' && endNode}

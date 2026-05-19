@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(venv/Scripts/python.exe main.py)"
+      "Bash(venv/Scripts/python.exe main.py)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":8001\")",
+      "Bash(findstr \":8000\")",
+      "Bash(tasklist)",
+      "Bash(findstr /I \"python.exe node.exe uvicorn\")",
+      "Bash(tasklist /FI \"IMAGENAME eq python.exe\")",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -in @\\('python','node','uvicorn'\\) } | Select-Object Id, ProcessName, MainWindowTitle)",
+      "PowerShell(Get-Process -Id 6240,48324 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-NetTCPConnection -State Listen -LocalPort 8001,8000,5173,5174 -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{Port=$_.LocalPort; PID=$_.OwningProcess; Name=$p.ProcessName} })",
+      "PowerShell(Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'python|node|uvicorn|vite' } | Select-Object ProcessId, Name, @{n='CmdLine';e={$_.CommandLine}} | Format-Table -AutoSize -Wrap)",
+      "PowerShell(Stop-Process -Id 33800,6240,20256 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'uvicorn' } | Select-Object ProcessId, Name)"
     ]
   }
 }

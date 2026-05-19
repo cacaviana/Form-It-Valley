@@ -20,6 +20,7 @@ from routers.users import router as users_router
 from routers.scheduling_config import router as scheduling_config_router
 from routers.whatsapp import router as whatsapp_router
 from routers.submission import router as submission_router
+from routers.blacklist import router as blacklist_router, public_router as blacklist_public_router
 import logging
 
 logging.basicConfig(
@@ -93,6 +94,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Rotas publicas (sem auth)
 app.include_router(auth_router)
 app.include_router(public_router)
+app.include_router(blacklist_public_router)
 
 # Rotas protegidas (requerem JWT)
 from itvalleysecurity.fastapi import require_access
@@ -109,6 +111,7 @@ app.include_router(users_router, **protected)
 app.include_router(scheduling_config_router, **protected)
 app.include_router(whatsapp_router, **protected)
 app.include_router(submission_router, **protected)
+app.include_router(blacklist_router, **protected)
 
 
 if __name__ == "__main__":

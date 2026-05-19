@@ -2,6 +2,8 @@
   import type { Node } from '@xyflow/svelte';
   import type { FlowNodeData, QuestionType, FlowOption } from '$lib/dto/flows/types';
   import { authFetch } from '$lib/utils/auth-fetch';
+  import { page as appPage } from '$app/state';
+  import BlacklistManageModal from './BlacklistManageModal.svelte';
 
   let { node, onUpdate, onDelete, onClose, catalogItems = [], acListId = '', acListName = '', onAcChange = (_id: string, _name: string) => {}, themeColor = 'violet', onThemeChange = (_color: string) => {} } = $props<{
     node: Node;
@@ -173,15 +175,48 @@
     start: 'bg-green-500',
     question: 'bg-blue-500',
     message: 'bg-gray-500',
-    end: 'bg-purple-500'
+    end: 'bg-purple-500',
+    blacklist: 'bg-red-500'
   };
 
   const typeLabels: Record<string, string> = {
     start: 'Début',
     question: 'Question',
     message: 'Message',
-    end: 'Fin'
+    end: 'Fin',
+    blacklist: 'Lista negra'
   };
+
+  // ==================== BLACKLIST ====================
+  const flowIdForBlacklist = $derived(appPage.params.id ?? '');
+  let showBlacklistModal = $state(false);
+
+  function onBlacklistTotalChanged(total: number) {
+    onUpdate({
+      blacklistTotalEntries: total,
+      blacklistUploadedAt: new Date().toISOString()
+    });
+  }
+
+  async function loadBlacklistMeta() {
+    if (node.type !== 'blacklist' || !flowIdForBlacklist || flowIdForBlacklist === 'new') return;
+    try {
+      const { getBlacklistMetadata } = await import('$lib/services/blacklistService');
+      const meta = await getBlacklistMetadata(flowIdForBlacklist);
+      if (meta.exists) {
+        onUpdate({
+          blacklistTotalEntries: meta.total_entries,
+          blacklistUploadedAt: meta.csv_uploaded_at
+        });
+      }
+    } catch { /* silent */ }
+  }
+
+  $effect(() => {
+    if (node.type === 'blacklist') {
+      loadBlacklistMeta();
+    }
+  });
 </script>
 
 <div class="w-80 bg-white border-l border-gray-200 h-full overflow-y-auto">
@@ -648,6 +683,59 @@
       </div>
     {/if}
 
+    <!-- ==================== BLACKLIST ==================== -->
+    {#if node.type === 'blacklist'}
+      <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+        <div class="flex gap-2">
+          <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <p class="text-xs text-red-700 leading-relaxed">
+            Posicione este nó <strong>antes</strong> do nó Fim de agendamento. Se o email ou telefone do lead estiver na lista negra, o fluxo é interrompido e a mensagem abaixo é exibida.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Mensagem de bloqueio</label>
+        <textarea
+          value={data.blockedMessage || ''}
+          oninput={(e) => onUpdate({ blockedMessage: (e.target as HTMLTextAreaElement).value })}
+          class="input"
+          rows="3"
+          placeholder="Desculpe, você não pode agendar uma reunião."
+        ></textarea>
+      </div>
+
+      <!-- Botão principal: abre o modal completo -->
+      <div class="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Lista negra</span>
+          <span class="text-xs text-gray-500">
+            {#if (data.blacklistTotalEntries ?? 0) > 0}
+              {data.blacklistTotalEntries} {data.blacklistTotalEntries === 1 ? 'entrada' : 'entradas'}
+            {:else}
+              vazia
+            {/if}
+          </span>
+        </div>
+        {#if data.blacklistUploadedAt}
+          <p class="text-[10px] text-gray-400 mb-2">Atualizada em: {new Date(data.blacklistUploadedAt).toLocaleString('pt-BR')}</p>
+        {/if}
+        <button
+          type="button"
+          disabled={!flowIdForBlacklist || flowIdForBlacklist === 'new'}
+          onclick={() => (showBlacklistModal = true)}
+          class="w-full bg-red-600 text-white text-sm font-semibold rounded-lg py-2 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          Gerenciar lista negra
+        </button>
+        {#if !flowIdForBlacklist || flowIdForBlacklist === 'new'}
+          <p class="text-[10px] text-amber-700 mt-1.5">Salve o formulário antes para habilitar a gestão.</p>
+        {/if}
+      </div>
+    {/if}
+
     <!-- Delete button -->
     {#if node.type !== 'start'}
       <div class="pt-3 border-t border-gray-100">
@@ -661,6 +749,14 @@
     {/if}
   </div>
 </div>
+
+{#if showBlacklistModal && flowIdForBlacklist && flowIdForBlacklist !== 'new'}
+  <BlacklistManageModal
+    flowId={flowIdForBlacklist}
+    onClose={() => (showBlacklistModal = false)}
+    onChange={onBlacklistTotalChanged}
+  />
+{/if}
 
 <style>
   .label {
