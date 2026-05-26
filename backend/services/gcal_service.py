@@ -294,8 +294,13 @@ class GCalService:
         lead_phone: str,
         scheduled_date: str,
         scheduled_time: str,
+        event_title: Optional[str] = None,
     ) -> Optional[dict]:
-        """Cria evento no Google Calendar. Retorna {event_id, html_link}."""
+        """Cria evento no Google Calendar. Retorna {event_id, html_link}.
+
+        event_title aceita placeholders: {{nome}}, {{data}}, {{horario}}.
+        Se None/"" usa default 'Call Consultor IT Valley - {nome}'.
+        """
         try:
             cal_id = self._get_calendar_id()
 
@@ -304,9 +309,18 @@ class GCalService:
             end_m = (m + 30) % 60
             end_time = f"{str(end_h).zfill(2)}:{str(end_m).zfill(2)}"
 
+            # Monta titulo do evento, resolvendo placeholders
+            if event_title and event_title.strip():
+                resolved_title = (event_title
+                    .replace("{{nome}}", lead_name or "")
+                    .replace("{{data}}", scheduled_date)
+                    .replace("{{horario}}", scheduled_time))
+            else:
+                resolved_title = f"Call Consultor IT Valley - {lead_name}"
+
             import uuid
             event = {
-                "summary": f"Call Consultor IT Valley - {lead_name}",
+                "summary": resolved_title,
                 "description": f"Lead: {lead_name}\nEmail: {lead_email}\nTelefone: {lead_phone or 'N/A'}\n\nAgendado via FormItValley",
                 "start": {
                     "dateTime": f"{scheduled_date}T{scheduled_time}:00",

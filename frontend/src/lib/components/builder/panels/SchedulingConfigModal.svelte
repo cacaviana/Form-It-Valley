@@ -6,13 +6,15 @@
     open,
     value,
     meetingLinkOverride = null,
+    gcalEventTitle = null,
     onSave,
     onCancel
   } = $props<{
     open: boolean;
     value: SchedulingConfig | null;
     meetingLinkOverride?: string | null;
-    onSave: (payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null }) => void;
+    gcalEventTitle?: string | null;
+    onSave: (payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null; gcalEventTitle: string | null }) => void;
     onCancel: () => void;
   }>();
 
@@ -35,6 +37,10 @@
   let linkMode = $state<'meet' | 'custom'>('meet');
   let localLink = $state('');
 
+  // ── Título do evento no Google Calendar ──
+  let localEventTitle = $state('');
+  const DEFAULT_EVENT_TITLE = 'Call Consultor IT Valley - {{nome}}';
+
   let globalSummary = $state('Carregando configuração global...');
   let calMonth = $state(new Date().getMonth());
   let calYear = $state(new Date().getFullYear());
@@ -43,17 +49,20 @@
     // Ler props ANTES do early return pra garantir que sao rastreadas como deps reativas
     const _value = value;
     const _link = meetingLinkOverride;
+    const _evt = gcalEventTitle;
     if (!open) return;
 
     // Computar tudo em vars locais (sem ler state que sera escrito)
     const safeDates = Array.isArray(_value?.dates) ? structuredClone(_value.dates) : [];
     const trimmed = _link?.trim() || '';
+    const evtTitle = _evt?.trim() || '';
 
     useGlobal = _value == null;
     localDates = safeDates;
     maxBookings = _value?.max_bookings_per_slot ?? 1;
     linkMode = trimmed ? 'custom' : 'meet';
     localLink = trimmed;
+    localEventTitle = evtTitle;
 
     if (safeDates.length > 0) {
       const first = safeDates[0].date;
@@ -171,7 +180,8 @@
           max_bookings_per_slot: Math.max(1, maxBookings)
         };
     const linkPayload = linkMode === 'custom' ? localLink.trim() : null;
-    onSave({ schedulingConfig: schedulingPayload, meetingLinkOverride: linkPayload });
+    const eventTitlePayload = localEventTitle.trim() ? localEventTitle.trim() : null;
+    onSave({ schedulingConfig: schedulingPayload, meetingLinkOverride: linkPayload, gcalEventTitle: eventTitlePayload });
   }
 
   function toggleUseGlobal() {
@@ -245,6 +255,30 @@
               {/if}
             </div>
           </label>
+        </div>
+
+        <!-- Título do evento no Google Calendar -->
+        <div class="bg-violet-50/40 border border-violet-100 rounded-xl p-4 space-y-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            <span class="text-sm font-semibold text-violet-900">Título do evento no Google Calendar</span>
+          </div>
+          <p class="text-xs text-gray-600">
+            Como o agendamento aparece na agenda. Deixe vazio para usar o padrão "Call Consultor IT Valley - {`{{nome}}`}".
+          </p>
+          <input
+            type="text"
+            bind:value={localEventTitle}
+            placeholder={DEFAULT_EVENT_TITLE}
+            class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          />
+          <p class="text-[11px] text-gray-500">
+            Placeholders: <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{nome}}`}</code>
+            <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{data}}`}</code>
+            <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{horario}}`}</code>
+          </p>
         </div>
 
         <!-- Toggle global -->

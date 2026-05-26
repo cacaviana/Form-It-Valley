@@ -63,6 +63,9 @@ class FlowFactory:
         # meeting_link_override: None/"" = usa Meet automatico; string = usa link custom
         link_override = data.get("meeting_link_override")
         doc["meeting_link_override"] = link_override if isinstance(link_override, str) and link_override.strip() else None
+        # gcal_event_title: None/"" = usa default; string = usa custom (suporta {{nome}})
+        evt_title = data.get("gcal_event_title")
+        doc["gcal_event_title"] = evt_title if isinstance(evt_title, str) and evt_title.strip() else None
         # email_config: None = template padrao; dict = personalizado
         email_cfg = data.get("email_config")
         doc["email_config"] = email_cfg if isinstance(email_cfg, dict) else None
@@ -126,6 +129,12 @@ class FlowFactory:
             update_doc["meeting_link_override"] = link_override if isinstance(link_override, str) and link_override.strip() else None
         else:
             update_doc["meeting_link_override"] = existing.get("meeting_link_override")
+        # gcal_event_title (mesma regra)
+        if "gcal_event_title" in data:
+            evt_title = data["gcal_event_title"]
+            update_doc["gcal_event_title"] = evt_title if isinstance(evt_title, str) and evt_title.strip() else None
+        else:
+            update_doc["gcal_event_title"] = existing.get("gcal_event_title")
         # email_config: null = padrao, dict = personalizado
         if "email_config" in data:
             email_cfg = data["email_config"]

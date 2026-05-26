@@ -17,5 +17,6 @@ class SaveFlowRequest(BaseModel):
     page_content: Optional[dict] = Field(default=None)
     scheduling_config: Optional[dict] = Field(default=None)
     meeting_link_override: Optional[str] = Field(default=None)
+    gcal_event_title: Optional[str] = Field(default=None)
     email_config: Optional[dict] = Field(default=None)
     ui_texts: Optional[dict] = Field(default=None)

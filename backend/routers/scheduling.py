@@ -70,12 +70,25 @@ async def create_scheduling(request: CreateSchedulingRequest):
 
 async def _do_create_scheduling(request: CreateSchedulingRequest):
     # 1. Google Calendar
+    event_title = None
+    if request.flow_id:
+        try:
+            from data.repositories.mongo.flow_repository import FlowRepository
+            flow_pre = await FlowRepository().find_by_id(request.flow_id)
+            if flow_pre:
+                et = flow_pre.get("gcal_event_title")
+                if isinstance(et, str) and et.strip():
+                    event_title = et.strip()
+        except Exception:
+            pass
+
     gcal_result = await _gcal.create_event(
         lead_name=request.lead_name,
         lead_email=request.lead_email,
         lead_phone=request.lead_phone or "",
         scheduled_date=request.scheduled_date,
         scheduled_time=request.scheduled_time,
+        event_title=event_title,
     )
     meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
     calendar_link = gcal_result.get("html_link", "") if gcal_result else ""

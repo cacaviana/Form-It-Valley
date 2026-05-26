@@ -69,12 +69,13 @@ export function createFlowBuilderStore() {
   let pageContent = $state<PageContent>({});
   let schedulingConfig = $state<SchedulingConfig | null>(null);
   let meetingLinkOverride = $state<string | null>(null);
+  let gcalEventTitle = $state<string | null>(null);
   let emailConfig = $state<EmailConfig | null>(null);
   let uiTexts = $state<UITexts | null>(null);
   let selectedNodeId = $state<string | null>(null);
   let hasChanges = $state(false);
 
-  function loadFlow(flow: { _id?: string; name: string; nodes: FlowNode[]; edges: FlowEdge[]; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string; page_template?: PageTemplate; page_content?: PageContent; scheduling_config?: SchedulingConfig | null; meeting_link_override?: string | null; email_config?: EmailConfig | null; ui_texts?: UITexts | null }) {
+  function loadFlow(flow: { _id?: string; name: string; nodes: FlowNode[]; edges: FlowEdge[]; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string; page_template?: PageTemplate; page_content?: PageContent; scheduling_config?: SchedulingConfig | null; meeting_link_override?: string | null; gcal_event_title?: string | null; email_config?: EmailConfig | null; ui_texts?: UITexts | null }) {
     flowId = flow._id || null;
     flowName = flow.name;
     pricingCsv = flow.pricing_csv || '';
@@ -85,6 +86,7 @@ export function createFlowBuilderStore() {
     pageContent = flow.page_content || {};
     schedulingConfig = flow.scheduling_config ?? null;
     meetingLinkOverride = flow.meeting_link_override ?? null;
+    gcalEventTitle = flow.gcal_event_title ?? null;
     emailConfig = flow.email_config ?? null;
     uiTexts = flow.ui_texts ?? null;
     nodes = toSvelteFlowNodes(flow.nodes);
@@ -176,6 +178,8 @@ export function createFlowBuilderStore() {
     set schedulingConfig(v: SchedulingConfig | null) { schedulingConfig = v; hasChanges = true; },
     get meetingLinkOverride() { return meetingLinkOverride; },
     set meetingLinkOverride(v: string | null) { meetingLinkOverride = v; hasChanges = true; },
+    get gcalEventTitle() { return gcalEventTitle; },
+    set gcalEventTitle(v: string | null) { gcalEventTitle = v; hasChanges = true; },
     get emailConfig() { return emailConfig; },
     set emailConfig(v: EmailConfig | null) { emailConfig = v; hasChanges = true; },
     get uiTexts() { return uiTexts; },

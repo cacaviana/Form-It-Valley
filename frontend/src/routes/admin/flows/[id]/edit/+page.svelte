@@ -258,6 +258,7 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
         page_content: store.pageContent,
         scheduling_config: store.schedulingConfig,
         meeting_link_override: store.meetingLinkOverride,
+        gcal_event_title: store.gcalEventTitle,
         email_config: store.emailConfig,
         ui_texts: store.uiTexts
       });
@@ -373,6 +374,8 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
         onSchedulingConfigChange={(cfg) => { store.schedulingConfig = cfg; }}
         meetingLinkOverride={store.meetingLinkOverride}
         onMeetingLinkOverrideChange={(link) => { store.meetingLinkOverride = link; }}
+        gcalEventTitle={store.gcalEventTitle}
+        onGcalEventTitleChange={(t) => { store.gcalEventTitle = t; }}
         emailConfig={store.emailConfig}
         onEmailConfigChange={(cfg) => { store.emailConfig = cfg; }}
         uiTexts={store.uiTexts}

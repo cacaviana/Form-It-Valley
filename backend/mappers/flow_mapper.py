@@ -23,6 +23,7 @@ class FlowMapper:
             "page_content": doc.get("page_content", {}),
             "scheduling_config": doc.get("scheduling_config"),
             "meeting_link_override": doc.get("meeting_link_override"),
+            "gcal_event_title": doc.get("gcal_event_title"),
             "email_config": doc.get("email_config"),
             "ui_texts": doc.get("ui_texts"),
             "created_at": doc.get("created_at", ""),
