@@ -80,6 +80,20 @@ export interface SchedulingConfig {
   max_bookings_per_slot: number;
 }
 
+export type { UITexts } from './uiTextDefaults';
+
+export interface EmailConfig {
+  subject?: string;
+  header_title?: string;
+  header_subtitle?: string;
+  greeting?: string;
+  body?: string;
+  meet_button_text?: string;
+  calendar_button_text?: string;
+  footer?: string;
+  header_color?: string;
+}
+
 export interface PageContent {
   topBannerText?: string;
   headline?: string;
@@ -87,6 +101,7 @@ export interface PageContent {
   bullets?: string[];
   disciplinesTitle?: string;
   disciplines?: string[];
+  cardSubtitle?: string;
 }
 
 export interface Flow {
@@ -106,6 +121,8 @@ export interface Flow {
   page_content?: PageContent;
   scheduling_config?: SchedulingConfig | null;
   meeting_link_override?: string | null;
+  email_config?: EmailConfig | null;
+  ui_texts?: import('./uiTextDefaults').UITexts | null;
   created_at?: string;
   updated_at?: string;
 }

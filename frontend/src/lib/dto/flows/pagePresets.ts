@@ -23,15 +23,17 @@ const COMMON_HEADLINE = 'UM ECOSSISTEMA COMPLETO PARA FORMAR PROFISSIONAIS VALOR
 const COMMON_HEADLINE_HIGHLIGHT = 'ECOSSISTEMA COMPLETO';
 const COMMON_TOP_BANNER = 'PREENCHA O FORMULÁRIO E DESCUBRA MAIS INFORMAÇÕES LOGO ABAIXO.';
 const COMMON_DISCIPLINES_TITLE = 'CONHEÇA NOSSAS DISCIPLINAS:';
+const COMMON_CARD_SUBTITLE = 'Preencha seus dados para falar com nosso consultor';
 
 export const PAGE_PRESETS: Record<PageTemplate, PageContent> = {
-  centered: {},
+  centered: { cardSubtitle: COMMON_CARD_SUBTITLE },
   pos_ia: {
     topBannerText: COMMON_TOP_BANNER,
     headline: COMMON_HEADLINE,
     headlineHighlight: COMMON_HEADLINE_HIGHLIGHT,
     bullets: [...COMMON_BULLETS],
     disciplinesTitle: COMMON_DISCIPLINES_TITLE,
+    cardSubtitle: COMMON_CARD_SUBTITLE,
     disciplines: [
       'Programação aplicada a Ciência de Dados',
       'Extração, Transformação e Carregamento de Dados (ETL)',
@@ -50,6 +52,7 @@ export const PAGE_PRESETS: Record<PageTemplate, PageContent> = {
     headlineHighlight: COMMON_HEADLINE_HIGHLIGHT,
     bullets: [...COMMON_BULLETS],
     disciplinesTitle: COMMON_DISCIPLINES_TITLE,
+    cardSubtitle: COMMON_CARD_SUBTITLE,
     disciplines: [
       'Engenharia de dados em cloud',
       'Extração, Transformação e Carregamento de Dados (ETL)',
@@ -73,6 +76,7 @@ export function resolvePageContent(template: PageTemplate, custom?: PageContent 
     headlineHighlight: c.headlineHighlight ?? preset.headlineHighlight ?? '',
     bullets: c.bullets ?? preset.bullets ?? [],
     disciplinesTitle: c.disciplinesTitle ?? preset.disciplinesTitle ?? '',
-    disciplines: c.disciplines ?? preset.disciplines ?? []
+    disciplines: c.disciplines ?? preset.disciplines ?? [],
+    cardSubtitle: c.cardSubtitle ?? preset.cardSubtitle ?? 'Preencha seus dados para falar com nosso consultor'
   };
 }

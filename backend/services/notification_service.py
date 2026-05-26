@@ -21,6 +21,7 @@ class NotificationService:
         scheduled_time: str,
         calendar_link: str = "",
         meet_link: str = "",
+        email_config: Optional[dict] = None,
     ) -> bool:
         api_key = settings.resend_api_key
         if not api_key:
@@ -30,23 +31,45 @@ class NotificationService:
         from_email = settings.email_from or "onboarding@resend.dev"
         formatted_date = _format_date_pt_br(scheduled_date)
 
+        # Defaults + override do email_config
+        cfg = email_config or {}
+        values = {
+            "nome": lead_name,
+            "data": formatted_date,
+            "horario": scheduled_time,
+            "link": meet_link or calendar_link or "",
+            "email": lead_email,
+        }
+        subject = _resolve_placeholders(
+            cfg.get("subject") or "Agendamento confirmado - {{data}} as {{horario}}",
+            values
+        )
+        header_title = _resolve_placeholders(cfg.get("header_title") or "Agendamento Confirmado!", values)
+        header_subtitle = _resolve_placeholders(cfg.get("header_subtitle") or "IT Valley - Escola de Tecnologia", values)
+        greeting = _resolve_placeholders(cfg.get("greeting") or "Ola, <strong>{{nome}}</strong>!", values)
+        body_text = _resolve_placeholders(cfg.get("body") or "Seu atendimento foi agendado com sucesso.", values)
+        meet_button_text = cfg.get("meet_button_text") or "Entrar na Reuniao (Google Meet)"
+        calendar_button_text = cfg.get("calendar_button_text") or "Ver Evento no Google Calendar"
+        footer = _resolve_placeholders(cfg.get("footer") or "IT Valley School - Escola de Tecnologia", values)
+        header_color = cfg.get("header_color") or "#2563eb"
+
         html_body = f"""
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <div style="background: #2563eb; color: white; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h2 style="margin: 0;">Agendamento Confirmado!</h2>
-                <p style="margin: 8px 0 0; opacity: 0.85;">IT Valley - Escola de Tecnologia</p>
+            <div style="background: {header_color}; color: white; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+                <h2 style="margin: 0;">{header_title}</h2>
+                <p style="margin: 8px 0 0; opacity: 0.85;">{header_subtitle}</p>
             </div>
             <div style="background: #f9fafb; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
-                <p style="color: #374151; font-size: 15px;">Ola, <strong>{lead_name}</strong>!</p>
-                <p style="color: #6b7280; font-size: 14px;">Seu atendimento foi agendado com sucesso.</p>
+                <p style="color: #374151; font-size: 15px;">{greeting}</p>
+                <p style="color: #6b7280; font-size: 14px;">{body_text}</p>
                 <div style="background: white; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; margin: 16px 0;">
                     <p style="margin: 0 0 8px; color: #374151;"><strong>Data:</strong> {formatted_date}</p>
                     <p style="margin: 0; color: #374151;"><strong>Horario:</strong> {scheduled_time}</p>
                 </div>
-                {'<a href="' + meet_link + '" style="display: block; background: #00897b; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Entrar na Reuniao (Google Meet)</a>' if meet_link else ''}
-                {'<a href="' + calendar_link + '" style="display: block; background: #2563eb; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin-top: 8px;">Ver Evento no Google Calendar</a>' if calendar_link else ''}
+                {'<a href="' + meet_link + '" style="display: block; background: #00897b; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">' + meet_button_text + '</a>' if meet_link else ''}
+                {'<a href="' + calendar_link + '" style="display: block; background: ' + header_color + '; color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin-top: 8px;">' + calendar_button_text + '</a>' if calendar_link else ''}
                 <p style="color: #9ca3af; font-size: 12px; margin-top: 16px; text-align: center;">
-                    IT Valley School - Escola de Tecnologia
+                    {footer}
                 </p>
             </div>
         </div>
@@ -63,7 +86,7 @@ class NotificationService:
                     json={
                         "from": from_email,
                         "to": [lead_email],
-                        "subject": f"Agendamento confirmado - {formatted_date} as {scheduled_time}",
+                        "subject": subject,
                         "html": html_body,
                     },
                 )

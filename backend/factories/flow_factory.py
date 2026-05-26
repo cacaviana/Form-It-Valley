@@ -63,6 +63,12 @@ class FlowFactory:
         # meeting_link_override: None/"" = usa Meet automatico; string = usa link custom
         link_override = data.get("meeting_link_override")
         doc["meeting_link_override"] = link_override if isinstance(link_override, str) and link_override.strip() else None
+        # email_config: None = template padrao; dict = personalizado
+        email_cfg = data.get("email_config")
+        doc["email_config"] = email_cfg if isinstance(email_cfg, dict) else None
+        # ui_texts: dict com strings personalizadas por chave
+        ui_t = data.get("ui_texts")
+        doc["ui_texts"] = ui_t if isinstance(ui_t, dict) else None
         return doc
 
     @classmethod
@@ -120,4 +126,16 @@ class FlowFactory:
             update_doc["meeting_link_override"] = link_override if isinstance(link_override, str) and link_override.strip() else None
         else:
             update_doc["meeting_link_override"] = existing.get("meeting_link_override")
+        # email_config: null = padrao, dict = personalizado
+        if "email_config" in data:
+            email_cfg = data["email_config"]
+            update_doc["email_config"] = email_cfg if isinstance(email_cfg, dict) else None
+        else:
+            update_doc["email_config"] = existing.get("email_config")
+        # ui_texts: null/dict
+        if "ui_texts" in data:
+            ui_t = data["ui_texts"]
+            update_doc["ui_texts"] = ui_t if isinstance(ui_t, dict) else None
+        else:
+            update_doc["ui_texts"] = existing.get("ui_texts")
         return update_doc

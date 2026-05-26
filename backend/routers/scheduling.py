@@ -81,6 +81,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
     calendar_link = gcal_result.get("html_link", "") if gcal_result else ""
 
     # Override: se o flow tem meeting_link_override, usa esse link nas notificacoes
+    email_cfg = None
     if request.flow_id:
         try:
             from data.repositories.mongo.flow_repository import FlowRepository
@@ -89,6 +90,9 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
                 override = flow_doc.get("meeting_link_override")
                 if isinstance(override, str) and override.strip():
                     meet_link = override.strip()
+                ec = flow_doc.get("email_config")
+                if isinstance(ec, dict):
+                    email_cfg = ec
         except Exception:
             pass
 
@@ -100,6 +104,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
         scheduled_time=request.scheduled_time,
         calendar_link=calendar_link,
         meet_link=meet_link,
+        email_config=email_cfg,
     )
 
     if request.lead_phone:

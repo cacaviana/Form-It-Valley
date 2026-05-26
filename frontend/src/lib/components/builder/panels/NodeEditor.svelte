@@ -1,11 +1,14 @@
 <script lang="ts">
   import type { Node } from '@xyflow/svelte';
-  import type { FlowNodeData, QuestionType, FlowOption, PageTemplate, PageContent, SchedulingConfig } from '$lib/dto/flows/types';
+  import type { FlowNodeData, QuestionType, FlowOption, PageTemplate, PageContent, SchedulingConfig, EmailConfig, UITexts } from '$lib/dto/flows/types';
+  import { FORM_TEXT_KEYS, SCHEDULING_TEXT_KEYS } from '$lib/dto/flows/uiTextDefaults';
   import { authFetch } from '$lib/utils/auth-fetch';
   import { page as appPage } from '$app/state';
   import BlacklistManageModal from './BlacklistManageModal.svelte';
   import TemplateEditorModal from './TemplateEditorModal.svelte';
   import SchedulingConfigModal from './SchedulingConfigModal.svelte';
+  import EmailConfigModal from './EmailConfigModal.svelte';
+  import TextEditorModal from './TextEditorModal.svelte';
 
   let {
     node,
@@ -25,7 +28,11 @@
     schedulingConfig = null as SchedulingConfig | null,
     onSchedulingConfigChange = (_cfg: SchedulingConfig | null) => {},
     meetingLinkOverride = null as string | null,
-    onMeetingLinkOverrideChange = (_link: string | null) => {}
+    onMeetingLinkOverrideChange = (_link: string | null) => {},
+    emailConfig = null as EmailConfig | null,
+    onEmailConfigChange = (_cfg: EmailConfig | null) => {},
+    uiTexts = null as UITexts | null,
+    onUiTextsChange = (_t: UITexts | null) => {}
   } = $props<{
     node: Node;
     onUpdate: (data: Partial<FlowNodeData>) => void;
@@ -45,10 +52,38 @@
     onSchedulingConfigChange?: (cfg: SchedulingConfig | null) => void;
     meetingLinkOverride?: string | null;
     onMeetingLinkOverrideChange?: (link: string | null) => void;
+    emailConfig?: EmailConfig | null;
+    onEmailConfigChange?: (cfg: EmailConfig | null) => void;
+    uiTexts?: UITexts | null;
+    onUiTextsChange?: (t: UITexts | null) => void;
   }>();
 
   let showTemplateModal = $state(false);
   let showSchedulingModal = $state(false);
+  let showEmailModal = $state(false);
+  let showFormTextsModal = $state(false);
+  let showSchedulingTextsModal = $state(false);
+
+  function handleEmailSave(cfg: EmailConfig | null) {
+    onEmailConfigChange(cfg);
+    showEmailModal = false;
+  }
+
+  function handleUiTextsSave(t: UITexts | null) {
+    onUiTextsChange(t);
+    showFormTextsModal = false;
+    showSchedulingTextsModal = false;
+  }
+
+  function countCustomized(keys: string[]): number {
+    if (!uiTexts) return 0;
+    return keys.filter(k => typeof (uiTexts as Record<string, unknown>)[k] === 'string' && ((uiTexts as Record<string, string>)[k]).length > 0).length;
+  }
+
+  let formTextKeys = $derived(FORM_TEXT_KEYS.flatMap(s => s.items.map(i => i.key as string)));
+  let schedulingTextKeys = $derived(SCHEDULING_TEXT_KEYS.flatMap(s => s.items.map(i => i.key as string)));
+  let customizedFormCount = $derived(countCustomized(formTextKeys));
+  let customizedSchedulingCount = $derived(countCustomized(schedulingTextKeys));
 
   function handleTemplateSave(payload: { themeColor: string; pageTemplate: PageTemplate; pageContent: PageContent }) {
     onThemeChange(payload.themeColor);
@@ -627,6 +662,63 @@
           </button>
         </div>
 
+        <!-- Textos do agendamento (Calendar + Time + Confirm + Done) -->
+        <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 space-y-2">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+            </svg>
+            <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Textos do agendamento</span>
+          </div>
+          <p class="text-xs text-gray-500">
+            {#if customizedSchedulingCount > 0}
+              <span class="text-blue-700 font-semibold">{customizedSchedulingCount}</span> texto(s) personalizado(s) · resto usa padrão
+            {:else}
+              Títulos, labels e botões das telas de calendário, horário, confirmação e sucesso.
+            {/if}
+          </p>
+          <button
+            type="button"
+            onclick={() => (showSchedulingTextsModal = true)}
+            class="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg py-2 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+            </svg>
+            Editar textos
+          </button>
+        </div>
+
+        <!-- E-mail de confirmação -->
+        <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 space-y-2">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">E-mail</span>
+          </div>
+          {#if emailConfig}
+            <p class="text-xs font-semibold text-blue-700">Personalizado neste formulário</p>
+            <p class="text-[11px] text-gray-500 line-clamp-2">
+              {emailConfig.header_title || 'Agendamento Confirmado!'}
+            </p>
+          {:else}
+            <p class="text-xs text-gray-500">
+              Usando o e-mail <strong>padrão</strong> do sistema. Personalize textos, cor e botões deste formulário.
+            </p>
+          {/if}
+          <button
+            type="button"
+            onclick={() => (showEmailModal = true)}
+            class="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg py-2 flex items-center justify-center gap-2 cursor-pointer transition-colors mt-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+            </svg>
+            {emailConfig ? 'Editar e-mail' : 'Personalizar e-mail'}
+          </button>
+        </div>
+
         <!-- WhatsApp Template Config -->
         <div class="border-t border-gray-200 pt-4 mt-2">
           <div class="flex items-center gap-1.5 mb-3">
@@ -775,6 +867,33 @@
         Ponto de entrada do fluxo. Coleta automaticamente: nome, e-mail, telefone e endereço do lead.
       </div>
 
+      <!-- Textos do formulário (Form + Perguntas) -->
+      <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 space-y-2">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+          </svg>
+          <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Textos do formulário</span>
+        </div>
+        <p class="text-xs text-gray-500">
+          {#if customizedFormCount > 0}
+            <span class="text-blue-700 font-semibold">{customizedFormCount}</span> texto(s) personalizado(s) · resto usa padrão
+          {:else}
+            Labels, placeholders e botões da tela inicial e das perguntas.
+          {/if}
+        </p>
+        <button
+          type="button"
+          onclick={() => (showFormTextsModal = true)}
+          class="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg py-2 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+          </svg>
+          Editar textos
+        </button>
+      </div>
+
       <!-- Botão para abrir o editor de template/cor -->
       <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 space-y-3">
         <div class="flex items-center justify-between">
@@ -897,6 +1016,34 @@
   meetingLinkOverride={meetingLinkOverride}
   onSave={handleSchedulingSave}
   onCancel={() => (showSchedulingModal = false)}
+/>
+
+<EmailConfigModal
+  open={showEmailModal}
+  value={emailConfig}
+  {themeColor}
+  onSave={handleEmailSave}
+  onCancel={() => (showEmailModal = false)}
+/>
+
+<TextEditorModal
+  open={showFormTextsModal}
+  title="Textos do formulário"
+  value={uiTexts}
+  sections={FORM_TEXT_KEYS}
+  {themeColor}
+  onSave={handleUiTextsSave}
+  onCancel={() => (showFormTextsModal = false)}
+/>
+
+<TextEditorModal
+  open={showSchedulingTextsModal}
+  title="Textos do agendamento"
+  value={uiTexts}
+  sections={SCHEDULING_TEXT_KEYS}
+  {themeColor}
+  onSave={handleUiTextsSave}
+  onCancel={() => (showSchedulingTextsModal = false)}
 />
 
 <style>

@@ -1,4 +1,4 @@
-import type { FlowNode, FlowEdge, PageTemplate, PageContent, SchedulingConfig } from './types';
+import type { FlowNode, FlowEdge, PageTemplate, PageContent, SchedulingConfig, EmailConfig, UITexts } from './types';
 
 export class SaveFlowRequest {
   private _id: string | null;
@@ -15,8 +15,10 @@ export class SaveFlowRequest {
   private page_content: PageContent;
   private scheduling_config: SchedulingConfig | null;
   private meeting_link_override: string | null;
+  private email_config: EmailConfig | null;
+  private ui_texts: UITexts | null;
 
-  constructor(data: { _id?: string | null; name: string; slug?: string; nodes: FlowNode[]; edges: FlowEdge[]; status?: string; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string; page_template?: PageTemplate; page_content?: PageContent; scheduling_config?: SchedulingConfig | null; meeting_link_override?: string | null }) {
+  constructor(data: { _id?: string | null; name: string; slug?: string; nodes: FlowNode[]; edges: FlowEdge[]; status?: string; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string; page_template?: PageTemplate; page_content?: PageContent; scheduling_config?: SchedulingConfig | null; meeting_link_override?: string | null; email_config?: EmailConfig | null; ui_texts?: UITexts | null }) {
     this._id = data._id || null;
     this.name = data.name || '';
     this.slug = data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -31,6 +33,8 @@ export class SaveFlowRequest {
     this.page_content = data.page_content || {};
     this.scheduling_config = data.scheduling_config ?? null;
     this.meeting_link_override = data.meeting_link_override?.trim() || null;
+    this.email_config = data.email_config ?? null;
+    this.ui_texts = data.ui_texts ?? null;
     if (!this.name.trim()) throw new Error('Nome do fluxo é obrigatório');
   }
 
@@ -52,7 +56,9 @@ export class SaveFlowRequest {
       page_template: this.page_template || 'centered',
       page_content: this.page_content || {},
       scheduling_config: this.scheduling_config,
-      meeting_link_override: this.meeting_link_override
+      meeting_link_override: this.meeting_link_override,
+      email_config: this.email_config,
+      ui_texts: this.ui_texts
     };
     if (this._id) payload._id = this._id;
     return payload;

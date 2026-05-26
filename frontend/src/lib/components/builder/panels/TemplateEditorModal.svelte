@@ -137,6 +137,20 @@
               </select>
             </div>
 
+            <!-- Subtítulo do card (sempre visível, em qualquer template) -->
+            <div>
+              <label for="tpl-card-subtitle" class="block text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">Subtítulo do formulário</label>
+              <p class="text-[11px] text-gray-400 mb-2">Frase abaixo do logo no card do formulário</p>
+              <input
+                id="tpl-card-subtitle"
+                type="text"
+                value={resolvedPreview.cardSubtitle}
+                oninput={(e) => updatePageField('cardSubtitle', (e.target as HTMLInputElement).value)}
+                class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:border-blue-400"
+                placeholder="Preencha seus dados para falar com nosso consultor"
+              />
+            </div>
+
             {#if localTemplate !== 'centered'}
               <div class="border border-violet-100 bg-violet-50/40 rounded-xl p-3 space-y-3">
                 <div class="flex items-center justify-between">
@@ -298,7 +312,7 @@
   <div class="bg-white/95 backdrop-blur-sm rounded-2xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
     <div class="px-6 pt-2 pb-1 text-center" style="background: {currentTheme.gradientHeader};">
       <img src="https://br.itvalleyschool.com/wp-content/uploads/2024/06/logo_horizontal_mono_branca_1-1024x511.webp" alt="IT Valley School" class="h-16 mx-auto mb-1" />
-      <p class="text-[12px] text-white/85 font-light">Preencha seus dados para falar com nosso consultor</p>
+      <p class="text-[12px] text-white/85 font-light">{resolvedPreview.cardSubtitle}</p>
     </div>
     <div class="px-5 py-5 space-y-3">
       <div>
