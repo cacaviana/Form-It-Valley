@@ -492,7 +492,11 @@
 
   let monthHasAvailability = $derived(availableDates.some(d => d.available));
   let morningSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) < 12));
-  let afternoonSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) >= 12));
+  let afternoonSlots = $derived(availableSlots.filter(s => {
+    const h = parseInt(s.split(':')[0]);
+    return h >= 12 && h < 18;
+  }));
+  let eveningSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) >= 18));
 
 
 </script>
@@ -674,6 +678,13 @@
 
     {:else if phase === 'form'}
       {@render formCardSnippet()}
+
+    {:else if phase === 'questions' && currentNode?.type === 'blacklist'}
+      <!-- Node blacklist: invisivel pro lead, so verifica em background -->
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] p-10 sm:p-16 text-center">
+        <div class="w-10 h-10 border-[3px] border-t-transparent rounded-full animate-spin mx-auto mb-4" style="border-color: {theme.main}; border-top-color: transparent;"></div>
+        <p class="text-sm text-gray-400">Carregando...</p>
+      </div>
 
     {:else if phase === 'questions' && currentNode}
       <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
@@ -937,6 +948,21 @@
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{uiT.time_afternoon}</p>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {#each afternoonSlots as slot}
+                    <button
+                      onclick={() => selectTime(slot)}
+                      class="min-h-[48px] py-3 sm:py-2.5 rounded-xl border-2 text-base sm:text-sm font-semibold transition-all cursor-pointer
+                      {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}"
+                    >{slot}</button>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+            <!-- Evening -->
+            {#if eveningSlots.length > 0}
+              <div class="mb-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{uiT.time_evening}</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {#each eveningSlots as slot}
                     <button
                       onclick={() => selectTime(slot)}
                       class="min-h-[48px] py-3 sm:py-2.5 rounded-xl border-2 text-base sm:text-sm font-semibold transition-all cursor-pointer

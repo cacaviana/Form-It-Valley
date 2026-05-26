@@ -34,6 +34,7 @@ export interface UITexts {
   time_title?: string;
   time_morning?: string;
   time_afternoon?: string;
+  time_evening?: string;
   time_empty?: string;
   time_continue?: string;
   time_back?: string;
@@ -89,6 +90,7 @@ export const UI_TEXT_DEFAULTS: Required<UITexts> = {
   time_title: 'Escolha o horário',
   time_morning: 'Manhã',
   time_afternoon: 'Tarde',
+  time_evening: 'Noite',
   time_empty: 'Nenhum horário disponível nesta data',
   time_continue: 'Continuar',
   time_back: 'Voltar ao calendário',
@@ -178,6 +180,7 @@ export const SCHEDULING_TEXT_KEYS: { section: string; items: { key: keyof UIText
       { key: 'time_title', label: 'Título "Escolha o horário"' },
       { key: 'time_morning', label: 'Seção "Manhã"' },
       { key: 'time_afternoon', label: 'Seção "Tarde"' },
+      { key: 'time_evening', label: 'Seção "Noite"' },
       { key: 'time_empty', label: 'Mensagem vazia' },
       { key: 'time_continue', label: 'Botão "Continuar"' },
       { key: 'time_back', label: 'Botão "Voltar ao calendário"' }
