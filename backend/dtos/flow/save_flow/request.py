@@ -13,3 +13,7 @@ class SaveFlowRequest(BaseModel):
     activecampaign_list_id: Optional[str] = Field(default=None)
     activecampaign_list_name: Optional[str] = Field(default=None)
     theme_color: Optional[str] = Field(default="violet")
+    page_template: Optional[str] = Field(default="centered")
+    page_content: Optional[dict] = Field(default=None)
+    scheduling_config: Optional[dict] = Field(default=None)
+    meeting_link_override: Optional[str] = Field(default=None)

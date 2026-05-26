@@ -68,6 +68,27 @@ export interface FlowEdge {
   label?: string;
 }
 
+export type PageTemplate = 'centered' | 'pos_ia' | 'pos_dados';
+
+export interface SchedulingDateEntry {
+  date: string;     // 'YYYY-MM-DD'
+  times: string[];  // ['09:00', '14:30', ...]
+}
+
+export interface SchedulingConfig {
+  dates: SchedulingDateEntry[];
+  max_bookings_per_slot: number;
+}
+
+export interface PageContent {
+  topBannerText?: string;
+  headline?: string;
+  headlineHighlight?: string;
+  bullets?: string[];
+  disciplinesTitle?: string;
+  disciplines?: string[];
+}
+
 export interface Flow {
   _id?: string;
   tenant_id: string;
@@ -81,6 +102,10 @@ export interface Flow {
   activecampaign_list_id?: string;
   activecampaign_list_name?: string;
   theme_color?: string;
+  page_template?: PageTemplate;
+  page_content?: PageContent;
+  scheduling_config?: SchedulingConfig | null;
+  meeting_link_override?: string | null;
   created_at?: string;
   updated_at?: string;
 }

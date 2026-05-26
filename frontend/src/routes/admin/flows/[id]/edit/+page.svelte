@@ -253,7 +253,11 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
         pricing_csv: store.pricingCsv,
         activecampaign_list_id: store.acListId,
         activecampaign_list_name: store.acListName,
-        theme_color: store.themeColor
+        theme_color: store.themeColor,
+        page_template: store.pageTemplate,
+        page_content: store.pageContent,
+        scheduling_config: store.schedulingConfig,
+        meeting_link_override: store.meetingLinkOverride
       });
       const saved = await service.save(dto);
       if (saved?._id && !store.flowId) {
@@ -359,6 +363,14 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
         onAcChange={(id, name) => { store.acListId = id; store.acListName = name; }}
         themeColor={store.themeColor}
         onThemeChange={(color) => { store.themeColor = color; }}
+        pageTemplate={store.pageTemplate}
+        pageContent={store.pageContent}
+        onPageTemplateChange={(tpl) => { store.pageTemplate = tpl; }}
+        onPageContentChange={(content) => { store.pageContent = content; }}
+        schedulingConfig={store.schedulingConfig}
+        onSchedulingConfigChange={(cfg) => { store.schedulingConfig = cfg; }}
+        meetingLinkOverride={store.meetingLinkOverride}
+        onMeetingLinkOverrideChange={(link) => { store.meetingLinkOverride = link; }}
       />
     {/if}
   </div>

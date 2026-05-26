@@ -56,6 +56,13 @@ class FlowFactory:
             doc["activecampaign_list_id"] = data["activecampaign_list_id"]
             doc["activecampaign_list_name"] = data.get("activecampaign_list_name", "")
         doc["theme_color"] = data.get("theme_color", "violet")
+        doc["page_template"] = data.get("page_template", "centered")
+        doc["page_content"] = data.get("page_content") or {}
+        # scheduling_config: None = usa global; dict = personalizado
+        doc["scheduling_config"] = data.get("scheduling_config")
+        # meeting_link_override: None/"" = usa Meet automatico; string = usa link custom
+        link_override = data.get("meeting_link_override")
+        doc["meeting_link_override"] = link_override if isinstance(link_override, str) and link_override.strip() else None
         return doc
 
     @classmethod
@@ -95,4 +102,22 @@ class FlowFactory:
             update_doc["activecampaign_list_id"] = existing["activecampaign_list_id"]
             update_doc["activecampaign_list_name"] = existing.get("activecampaign_list_name", "")
         update_doc["theme_color"] = data.get("theme_color") or existing.get("theme_color", "violet")
+        update_doc["page_template"] = data.get("page_template") or existing.get("page_template", "centered")
+        page_content = data.get("page_content")
+        if page_content is not None:
+            update_doc["page_content"] = page_content
+        else:
+            update_doc["page_content"] = existing.get("page_content", {})
+        # scheduling_config: frontend envia explicitamente (null pra usar global, dict pra personalizado).
+        # Se a chave estiver presente no payload, sobrescreve; senao preserva o existente.
+        if "scheduling_config" in data:
+            update_doc["scheduling_config"] = data["scheduling_config"]
+        else:
+            update_doc["scheduling_config"] = existing.get("scheduling_config")
+        # meeting_link_override (mesma regra)
+        if "meeting_link_override" in data:
+            link_override = data["meeting_link_override"]
+            update_doc["meeting_link_override"] = link_override if isinstance(link_override, str) and link_override.strip() else None
+        else:
+            update_doc["meeting_link_override"] = existing.get("meeting_link_override")
         return update_doc

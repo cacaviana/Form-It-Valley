@@ -19,6 +19,10 @@ class FlowMapper:
             "activecampaign_list_id": doc.get("activecampaign_list_id", ""),
             "activecampaign_list_name": doc.get("activecampaign_list_name", ""),
             "theme_color": doc.get("theme_color", "violet"),
+            "page_template": doc.get("page_template", "centered"),
+            "page_content": doc.get("page_content", {}),
+            "scheduling_config": doc.get("scheduling_config"),
+            "meeting_link_override": doc.get("meeting_link_override"),
             "created_at": doc.get("created_at", ""),
             "updated_at": doc.get("updated_at", ""),
         }

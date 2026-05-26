@@ -1,4 +1,4 @@
-import type { FlowNode, FlowEdge } from './types';
+import type { FlowNode, FlowEdge, PageTemplate, PageContent, SchedulingConfig } from './types';
 
 export class SaveFlowRequest {
   private _id: string | null;
@@ -11,8 +11,12 @@ export class SaveFlowRequest {
   private activecampaign_list_id: string;
   private activecampaign_list_name: string;
   private theme_color: string;
+  private page_template: PageTemplate;
+  private page_content: PageContent;
+  private scheduling_config: SchedulingConfig | null;
+  private meeting_link_override: string | null;
 
-  constructor(data: { _id?: string | null; name: string; slug?: string; nodes: FlowNode[]; edges: FlowEdge[]; status?: string; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string }) {
+  constructor(data: { _id?: string | null; name: string; slug?: string; nodes: FlowNode[]; edges: FlowEdge[]; status?: string; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string; page_template?: PageTemplate; page_content?: PageContent; scheduling_config?: SchedulingConfig | null; meeting_link_override?: string | null }) {
     this._id = data._id || null;
     this.name = data.name || '';
     this.slug = data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -23,6 +27,10 @@ export class SaveFlowRequest {
     this.activecampaign_list_id = data.activecampaign_list_id || '';
     this.activecampaign_list_name = data.activecampaign_list_name || '';
     this.theme_color = data.theme_color || 'violet';
+    this.page_template = data.page_template || 'centered';
+    this.page_content = data.page_content || {};
+    this.scheduling_config = data.scheduling_config ?? null;
+    this.meeting_link_override = data.meeting_link_override?.trim() || null;
     if (!this.name.trim()) throw new Error('Nome do fluxo é obrigatório');
   }
 
@@ -40,7 +48,11 @@ export class SaveFlowRequest {
       pricing_csv: this.pricing_csv,
       activecampaign_list_id: this.activecampaign_list_id || '',
       activecampaign_list_name: this.activecampaign_list_name || '',
-      theme_color: this.theme_color || 'violet'
+      theme_color: this.theme_color || 'violet',
+      page_template: this.page_template || 'centered',
+      page_content: this.page_content || {},
+      scheduling_config: this.scheduling_config,
+      meeting_link_override: this.meeting_link_override
     };
     if (this._id) payload._id = this._id;
     return payload;

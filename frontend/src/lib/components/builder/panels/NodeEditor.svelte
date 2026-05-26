@@ -1,11 +1,32 @@
 <script lang="ts">
   import type { Node } from '@xyflow/svelte';
-  import type { FlowNodeData, QuestionType, FlowOption } from '$lib/dto/flows/types';
+  import type { FlowNodeData, QuestionType, FlowOption, PageTemplate, PageContent, SchedulingConfig } from '$lib/dto/flows/types';
   import { authFetch } from '$lib/utils/auth-fetch';
   import { page as appPage } from '$app/state';
   import BlacklistManageModal from './BlacklistManageModal.svelte';
+  import TemplateEditorModal from './TemplateEditorModal.svelte';
+  import SchedulingConfigModal from './SchedulingConfigModal.svelte';
 
-  let { node, onUpdate, onDelete, onClose, catalogItems = [], acListId = '', acListName = '', onAcChange = (_id: string, _name: string) => {}, themeColor = 'violet', onThemeChange = (_color: string) => {} } = $props<{
+  let {
+    node,
+    onUpdate,
+    onDelete,
+    onClose,
+    catalogItems = [],
+    acListId = '',
+    acListName = '',
+    onAcChange = (_id: string, _name: string) => {},
+    themeColor = 'violet',
+    onThemeChange = (_color: string) => {},
+    pageTemplate = 'centered' as PageTemplate,
+    pageContent = {} as PageContent,
+    onPageTemplateChange = (_tpl: PageTemplate) => {},
+    onPageContentChange = (_content: PageContent) => {},
+    schedulingConfig = null as SchedulingConfig | null,
+    onSchedulingConfigChange = (_cfg: SchedulingConfig | null) => {},
+    meetingLinkOverride = null as string | null,
+    onMeetingLinkOverrideChange = (_link: string | null) => {}
+  } = $props<{
     node: Node;
     onUpdate: (data: Partial<FlowNodeData>) => void;
     onDelete: () => void;
@@ -16,18 +37,58 @@
     onAcChange?: (listId: string, listName: string) => void;
     themeColor?: string;
     onThemeChange?: (color: string) => void;
+    pageTemplate?: PageTemplate;
+    pageContent?: PageContent;
+    onPageTemplateChange?: (tpl: PageTemplate) => void;
+    onPageContentChange?: (content: PageContent) => void;
+    schedulingConfig?: SchedulingConfig | null;
+    onSchedulingConfigChange?: (cfg: SchedulingConfig | null) => void;
+    meetingLinkOverride?: string | null;
+    onMeetingLinkOverrideChange?: (link: string | null) => void;
   }>();
 
-  const themeColors = [
-    { id: 'violet', label: 'Roxo', color: '#7C3AED', light: '#EDE9FE' },
-    { id: 'blue', label: 'Azul', color: '#2563EB', light: '#DBEAFE' },
-    { id: 'emerald', label: 'Verde', color: '#059669', light: '#D1FAE5' },
-    { id: 'rose', label: 'Rosa', color: '#E11D48', light: '#FFE4E6' },
-    { id: 'orange', label: 'Laranja', color: '#EA580C', light: '#FFEDD5' },
-    { id: 'cyan', label: 'Ciano', color: '#0891B2', light: '#CFFAFE' },
-    { id: 'amber', label: 'Dourado', color: '#D97706', light: '#FEF3C7' },
-    { id: 'slate', label: 'Escuro', color: '#334155', light: '#F1F5F9' },
-  ];
+  let showTemplateModal = $state(false);
+  let showSchedulingModal = $state(false);
+
+  function handleTemplateSave(payload: { themeColor: string; pageTemplate: PageTemplate; pageContent: PageContent }) {
+    onThemeChange(payload.themeColor);
+    onPageTemplateChange(payload.pageTemplate);
+    onPageContentChange(payload.pageContent);
+    showTemplateModal = false;
+  }
+
+  function handleSchedulingSave(payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null }) {
+    onSchedulingConfigChange(payload.schedulingConfig);
+    onMeetingLinkOverrideChange(payload.meetingLinkOverride);
+    showSchedulingModal = false;
+  }
+
+  function formatDateShort(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'short' });
+  }
+
+  let schedulingDetails = $derived.by(() => {
+    if (!schedulingConfig) return null;
+    const dates = (schedulingConfig.dates || []) as { date: string; times: string[] }[];
+    const sorted = [...dates].sort((a, b) => a.date.localeCompare(b.date));
+    return {
+      dates: sorted,
+      totalTimes: sorted.reduce((sum, d) => sum + d.times.length, 0),
+      maxBookings: schedulingConfig.max_bookings_per_slot
+    };
+  });
+
+  const themeColorPreview: Record<string, string> = {
+    violet: '#7C3AED', blue: '#2563EB', emerald: '#059669', rose: '#E11D48',
+    orange: '#EA580C', cyan: '#0891B2', amber: '#D97706', slate: '#334155'
+  };
+
+  const templateLabels: Record<PageTemplate, string> = {
+    centered: 'Centralizada',
+    pos_ia: 'Pós IA',
+    pos_dados: 'Pós Dados'
+  };
 
   let data = $derived(node.data as FlowNodeData);
 
@@ -516,6 +577,56 @@
           ></textarea>
         </div>
 
+        <!-- Horários (config personalizada do flow) -->
+        <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 space-y-2">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Horários</span>
+          </div>
+          {#if schedulingDetails}
+            <p class="text-xs font-semibold text-blue-700">
+              Personalizado neste formulário
+            </p>
+            <p class="text-[11px] text-gray-500 mb-1">
+              {schedulingDetails.dates.length} data{schedulingDetails.dates.length !== 1 ? 's' : ''} ·
+              {schedulingDetails.totalTimes} horário{schedulingDetails.totalTimes !== 1 ? 's' : ''} ·
+              até {schedulingDetails.maxBookings} por horário
+            </p>
+            <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {#each schedulingDetails.dates as entry}
+                <div class="bg-white border border-gray-200 rounded-lg px-2 py-1.5">
+                  <p class="text-[11px] font-semibold text-gray-800 capitalize">{formatDateShort(entry.date)}</p>
+                  {#if entry.times.length > 0}
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      {#each entry.times as t}
+                        <span class="bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded font-mono">{t}</span>
+                      {/each}
+                    </div>
+                  {:else}
+                    <p class="text-[10px] text-amber-600 mt-0.5">Sem horário</p>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <p class="text-xs text-gray-500">
+              Usando a configuração <strong>global</strong>. Personalize para definir horários só deste formulário.
+            </p>
+          {/if}
+          <button
+            type="button"
+            onclick={() => (showSchedulingModal = true)}
+            class="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg py-2 flex items-center justify-center gap-2 cursor-pointer transition-colors mt-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+            </svg>
+            {schedulingDetails ? 'Editar horários' : 'Personalizar horários'}
+          </button>
+        </div>
+
         <!-- WhatsApp Template Config -->
         <div class="border-t border-gray-200 pt-4 mt-2">
           <div class="flex items-center gap-1.5 mb-3">
@@ -664,22 +775,35 @@
         Ponto de entrada do fluxo. Coleta automaticamente: nome, e-mail, telefone e endereço do lead.
       </div>
 
-      <!-- Cor do formulário -->
-      <div>
-        <label class="label">Cor do formulário</label>
-        <p class="text-xs text-gray-400 mb-3">Escolha a cor principal do formulário público</p>
-        <div class="grid grid-cols-4 gap-2">
-          {#each themeColors as tc}
-            <button
-              type="button"
-              onclick={() => onThemeChange(tc.id)}
-              class="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all cursor-pointer {themeColor === tc.id ? 'border-gray-900 shadow-sm' : 'border-transparent hover:bg-gray-50'}"
-            >
-              <div class="w-8 h-8 rounded-full shadow-sm" style="background: {tc.color};"></div>
-              <span class="text-[10px] font-medium text-gray-600">{tc.label}</span>
-            </button>
-          {/each}
+      <!-- Botão para abrir o editor de template/cor -->
+      <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Aparência do formulário</span>
         </div>
+
+        <div class="flex items-center gap-2 text-xs text-gray-600">
+          <div class="w-4 h-4 rounded-full border border-white shadow-sm" style="background: {themeColorPreview[themeColor] || themeColorPreview.violet};"></div>
+          <span>Cor — <strong>{themeColor}</strong></span>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-gray-600">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h12A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5" />
+          </svg>
+          <span>Template — <strong>{templateLabels[pageTemplate] || pageTemplate}</strong></span>
+        </div>
+
+        <button
+          type="button"
+          onclick={() => (showTemplateModal = true)}
+          class="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg py-2.5 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+          </svg>
+          Editar template
+        </button>
       </div>
     {/if}
 
@@ -757,6 +881,23 @@
     onChange={onBlacklistTotalChanged}
   />
 {/if}
+
+<TemplateEditorModal
+  open={showTemplateModal}
+  {themeColor}
+  {pageTemplate}
+  {pageContent}
+  onSave={handleTemplateSave}
+  onCancel={() => (showTemplateModal = false)}
+/>
+
+<SchedulingConfigModal
+  open={showSchedulingModal}
+  value={schedulingConfig}
+  meetingLinkOverride={meetingLinkOverride}
+  onSave={handleSchedulingSave}
+  onCancel={() => (showSchedulingModal = false)}
+/>
 
 <style>
   .label {

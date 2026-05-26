@@ -4,6 +4,9 @@
   import { FlowsService } from '$lib/services/flows.service';
   import { SubmissionsService } from '$lib/services/submissions.service';
   import type { Flow, FlowNode, FlowEdge } from '$lib/dto/flows/types';
+  import { resolvePageContent, PAGE_BACKGROUND_URL } from '$lib/dto/flows/pagePresets';
+  import FormPosSidebarTop from './FormPosSidebarTop.svelte';
+  import FormPosSidebarBottom from './FormPosSidebarBottom.svelte';
   import utmTrackingScript from '$lib/scripts/utm-tracking.js?raw';
 
   const flowService = new FlowsService();
@@ -25,6 +28,10 @@
     slate:   { main: '#334155', gradient: 'linear-gradient(135deg, #334155, #475569)', gradientHeader: 'linear-gradient(135deg, #334155 0%, #475569 100%)', ring: 'focus:ring-slate-500/25 focus:border-slate-400', bg: 'bg-slate-600 hover:bg-slate-700', text: 'text-slate-600', hover: 'hover:bg-slate-50', lightBg: 'bg-slate-50' },
   };
   let theme = $derived(colorMap[flow?.theme_color || 'violet'] || colorMap.violet);
+  let pageTemplate = $derived(flow?.page_template || 'centered');
+  let isPosTemplate = $derived(pageTemplate !== 'centered');
+  let pageContentResolved = $derived(resolvePageContent(pageTemplate, flow?.page_content));
+  let posBgUrl = $derived(PAGE_BACKGROUND_URL[pageTemplate] || '');
 
   // Executor state
   let phase = $state<'form' | 'questions' | 'end' | 'scheduling' | 'blocked'>('form');
@@ -286,6 +293,17 @@
       if (currentNode.data.endType === 'scheduling') {
         phase = 'scheduling';
         schedulingStep = 'calendar';
+        // Em modo personalizado, abrir no mes da primeira data futura configurada
+        if (Array.isArray(flow?.scheduling_config?.dates) && flow.scheduling_config.dates.length > 0) {
+          const today = new Date().toISOString().slice(0, 10);
+          const futureDates = flow.scheduling_config.dates
+            .map(d => d.date)
+            .filter(d => d >= today)
+            .sort();
+          const target = futureDates[0] || flow.scheduling_config.dates[0].date;
+          calYear = parseInt(target.slice(0, 4));
+          calMonth = parseInt(target.slice(5, 7)) - 1;
+        }
         loadAvailableDates(calMonth + 1, calYear);
       } else {
         phase = 'end';
@@ -362,7 +380,8 @@
   async function loadAvailableDates(month: number, year: number) {
     loadingDates = true;
     try {
-      const res = await fetch(`/api/scheduling?action=dates&month=${month}&year=${year}`);
+      const flowParam = flow?._id ? `&flow_id=${flow._id}` : '';
+      const res = await fetch(`/api/scheduling?action=dates&month=${month}&year=${year}${flowParam}`);
       if (res.ok) availableDates = await res.json();
     } catch (e) { /* silent */ }
     loadingDates = false;
@@ -373,7 +392,8 @@
     selectedTime = '';
     loadingSlots = true;
     try {
-      const res = await fetch(`/api/scheduling?action=slots&date=${date}`);
+      const flowParam = flow?._id ? `&flow_id=${flow._id}` : '';
+      const res = await fetch(`/api/scheduling?action=slots&date=${date}${flowParam}`);
       if (res.ok) availableSlots = await res.json();
     } catch (e) { /* silent */ }
     loadingSlots = false;
@@ -444,16 +464,200 @@
     for (const d of availableDates) map[d.date] = d;
     return map;
   });
+
+  // Modo personalizado: flow tem scheduling_config com dates[]
+  let isCustomMode = $derived(Array.isArray(flow?.scheduling_config?.dates));
+  let customDates = $derived<string[]>(
+    isCustomMode ? (flow!.scheduling_config!.dates.map(d => d.date)) : []
+  );
+  let customMinDate = $derived(customDates.length ? customDates.reduce((min, d) => d < min ? d : min) : '');
+  let customMaxDate = $derived(customDates.length ? customDates.reduce((max, d) => d > max ? d : max) : '');
+
   let canGoPrev = $derived.by(() => {
     const now = new Date();
-    return calYear > now.getFullYear() || (calYear === now.getFullYear() && calMonth > now.getMonth());
+    const minMonthYear = isCustomMode && customMinDate
+      ? { y: parseInt(customMinDate.slice(0, 4)), m: parseInt(customMinDate.slice(5, 7)) - 1 }
+      : { y: now.getFullYear(), m: now.getMonth() };
+    return calYear > minMonthYear.y || (calYear === minMonthYear.y && calMonth > minMonthYear.m);
   });
+
+  let canGoNext = $derived.by(() => {
+    if (!isCustomMode || !customMaxDate) return true;
+    const maxY = parseInt(customMaxDate.slice(0, 4));
+    const maxM = parseInt(customMaxDate.slice(5, 7)) - 1;
+    return calYear < maxY || (calYear === maxY && calMonth < maxM);
+  });
+
+  let monthHasAvailability = $derived(availableDates.some(d => d.available));
   let morningSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) < 12));
   let afternoonSlots = $derived(availableSlots.filter(s => parseInt(s.split(':')[0]) >= 12));
 
 
 </script>
 
+{#snippet formCardSnippet()}
+  <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_24px_70px_rgba(15,10,26,0.4)] overflow-hidden">
+
+    <!-- Header com cor do tema -->
+    <div class="px-5 sm:px-8 pt-2 pb-1 text-center" style="background: {theme.gradientHeader};">
+      <img src="https://br.itvalleyschool.com/wp-content/uploads/2024/06/logo_horizontal_mono_branca_1-1024x511.webp" alt="IT Valley School" class="h-20 sm:h-24 md:h-28 mx-auto mb-1 drop-shadow-[0_12px_30px_rgba(0,0,0,0.32)]" />
+      <p class="text-[13px] sm:text-[15px] text-white/85 font-light tracking-[0.01em]">Preencha seus dados para falar com nosso consultor</p>
+    </div>
+
+    <!-- Campos -->
+    <div class="px-4 sm:px-8 py-5 sm:py-8 space-y-4">
+
+      <!-- Nome -->
+      <div>
+        <label for="form-field-name" class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nome completo</label>
+        <input id="form-field-name" type="text" bind:value={clientData.name} class="w-full border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-[15px] text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all" placeholder="Seu nome completo" />
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label for="form-field-email" class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">E-mail</label>
+        <input id="form-field-email" type="email" bind:value={clientData.email} class="w-full border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-[15px] text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all" placeholder="seu@email.com" />
+        {#if clientData.email && !emailValid}
+          <p class="text-xs text-red-400 mt-1">Informe um e-mail válido</p>
+        {/if}
+      </div>
+
+      <!-- WhatsApp -->
+      <div>
+        <label for="form-field-phone" class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">WhatsApp</label>
+
+        <!-- DDI - Dropdown customizado com bandeiras -->
+        <div class="relative mb-2">
+          <button
+            type="button"
+            onclick={() => showCountryDropdown = !showCountryDropdown}
+            class="w-full border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-sm text-gray-800 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all cursor-pointer flex items-center gap-3"
+          >
+            <img src="https://flagcdn.com/24x18/{selectedCountry.iso}.png" alt={selectedCountry.name} class="w-6 h-[18px] rounded-sm object-cover" />
+            <span class="flex-1 text-left">{selectedCountry.name} (+{selectedCountry.code})</span>
+            <svg class="w-4 h-4 text-gray-400 transition-transform {showCountryDropdown ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+          </button>
+
+          {#if showCountryDropdown}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="absolute inset-0 fixed z-20" onclick={() => showCountryDropdown = false} onkeydown={() => {}}></div>
+            <div class="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+              {#each countries as country}
+                <button
+                  type="button"
+                  onclick={() => selectCountry(country.code)}
+                  class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer {country.code === clientData.phoneCountryCode ? 'bg-gray-100 font-medium' : ''}"
+                >
+                  <img src="https://flagcdn.com/24x18/{country.iso}.png" alt={country.name} class="w-6 h-[18px] rounded-sm object-cover" />
+                  <span class="flex-1 text-left">{country.name}</span>
+                  <span class="text-gray-400 text-xs">+{country.code}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+        <!-- DDD + Numero -->
+        <div class="flex flex-col sm:flex-row gap-2">
+          {#if isBrazil}
+            <select
+              id="client-ddd"
+              bind:value={clientData.phoneDDD}
+              class="border border-gray-200/90 bg-gray-50/70 rounded-xl px-3 py-3 text-sm text-gray-800 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all w-full sm:min-w-[145px] sm:w-auto cursor-pointer"
+            >
+              <option value="" disabled>DDD</option>
+              {#each brDDDs as item}
+                <option value={item.ddd}>{item.label}</option>
+              {/each}
+            </select>
+          {:else}
+            <input
+              id="client-area-code"
+              type="text"
+              bind:value={clientData.phoneDDD}
+              placeholder="Cód. área"
+              oninput={(e) => {
+                const input = e.target as HTMLInputElement;
+                clientData.phoneDDD = input.value.replace(/\D/g, '').slice(0, 5);
+              }}
+              class="border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all w-full sm:w-[110px]"
+            />
+          {/if}
+
+          <input
+            id="form-field-phone"
+            type="tel"
+            bind:value={clientData.phone}
+            placeholder={isBrazil ? '99999-9999' : 'Número'}
+            oninput={(e) => {
+              const input = e.target as HTMLInputElement;
+              if (isBrazil) {
+                let v = input.value.replace(/\D/g, '').slice(0, 9);
+                if (v.length > 5) v = `${v.slice(0,5)}-${v.slice(5)}`;
+                clientData.phone = v;
+              }
+            }}
+            class="flex-1 border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-[15px] text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all"
+          />
+        </div>
+
+        {#if clientData.phoneDDD && clientData.phone}
+          <p class="text-[11px] text-gray-400 mt-1.5 font-mono">
+            +{clientData.phoneCountryCode} ({clientData.phoneDDD}) {clientData.phone}
+          </p>
+        {/if}
+
+        {#if !phoneValid && (clientData.phone || clientData.phoneDDD)}
+          <p class="text-xs text-red-400 mt-1">
+            {#if isBrazil && !clientData.phoneDDD}
+              Selecione o DDD
+            {:else if !isBrazil && !clientData.phoneDDD.trim()}
+              Informe o código de área
+            {:else}
+              Número incompleto
+            {/if}
+          </p>
+        {/if}
+      </div>
+
+      <!-- Botao -->
+      <button
+        onclick={startQuestions}
+        disabled={!clientData.name.trim() || !emailValid || !phoneValid}
+        class="w-full py-3.5 rounded-xl text-[15px] font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all duration-200 active:scale-[0.99] mt-2"
+        style="background: {theme.gradient};"
+      >
+        Começar
+      </button>
+
+      <p class="text-center text-[12px] sm:text-[13px] text-gray-500 mt-3 tracking-wide font-medium">Powered by IT Valley School</p>
+    </div>
+  </div>
+{/snippet}
+
+{#if isPosTemplate && phase === 'form'}
+  <!-- Layout Pós: barra topo + 2 colunas (sidebar de venda + card do formulário) -->
+  <div class="min-h-screen relative overflow-hidden" style="background-color: #0d0a1f; background-image: url('{posBgUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat; --tc: {theme.main};">
+    {#if pageContentResolved.topBannerText}
+      <div class="text-white text-center text-[11px] sm:text-xs font-bold py-2.5 px-4 tracking-wide" style="background: linear-gradient(90deg, #b91c1c 0%, #dc2626 50%, #b91c1c 100%);">
+        {pageContentResolved.topBannerText}
+      </div>
+    {/if}
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-14">
+      <div class="grid gap-6 sm:gap-8 lg:gap-16 max-w-[1400px] mx-auto lg:grid-cols-[1fr_400px]">
+        <div class="lg:row-start-1 lg:col-start-1">
+          <FormPosSidebarTop content={pageContentResolved} themeMain={theme.main} />
+        </div>
+        <div class="w-full max-w-[400px] mx-auto lg:mx-0 lg:justify-self-end lg:row-start-1 lg:row-span-2 lg:col-start-2 lg:self-center">
+          {@render formCardSnippet()}
+        </div>
+        <div class="lg:row-start-2 lg:col-start-1">
+          <FormPosSidebarBottom content={pageContentResolved} themeMain={theme.main} />
+        </div>
+      </div>
+    </div>
+  </div>
+{:else}
 <div class="min-h-screen flex items-center justify-center p-3 sm:p-4 md:p-6 relative overflow-hidden" style="font-weight: 400; background: #000000; --tc: {theme.main};">
   <div class="relative z-10 max-w-[460px] w-full text-base">
 
@@ -467,143 +671,7 @@
       <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] p-8 sm:p-12 text-center text-red-500 text-sm">{error}</div>
 
     {:else if phase === 'form'}
-      <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_24px_70px_rgba(15,10,26,0.4)] overflow-hidden">
-
-        <!-- Header com cor do tema -->
-        <div class="px-5 sm:px-8 pt-2 pb-1 text-center" style="background: {theme.gradientHeader};">
-          <img src="https://br.itvalleyschool.com/wp-content/uploads/2024/06/logo_horizontal_mono_branca_1-1024x511.webp" alt="IT Valley School" class="h-20 sm:h-24 md:h-28 mx-auto mb-1 drop-shadow-[0_12px_30px_rgba(0,0,0,0.32)]" />
-          <p class="text-[13px] sm:text-[15px] text-white/85 font-light tracking-[0.01em]">Preencha seus dados para falar com nosso consultor</p>
-        </div>
-
-        <!-- Campos -->
-        <div class="px-4 sm:px-8 py-5 sm:py-8 space-y-4">
-
-          <!-- Nome -->
-          <div>
-            <label for="form-field-name" class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nome completo</label>
-            <input id="form-field-name" type="text" bind:value={clientData.name} class="w-full border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-[15px] text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all" placeholder="Seu nome completo" />
-          </div>
-
-          <!-- Email -->
-          <div>
-            <label for="form-field-email" class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">E-mail</label>
-            <input id="form-field-email" type="email" bind:value={clientData.email} class="w-full border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-[15px] text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all" placeholder="seu@email.com" />
-            {#if clientData.email && !emailValid}
-              <p class="text-xs text-red-400 mt-1">Informe um e-mail válido</p>
-            {/if}
-          </div>
-
-          <!-- WhatsApp -->
-          <div>
-            <label for="form-field-phone" class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">WhatsApp</label>
-
-            <!-- DDI - Dropdown customizado com bandeiras -->
-            <div class="relative mb-2">
-              <button
-                type="button"
-                onclick={() => showCountryDropdown = !showCountryDropdown}
-                class="w-full border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-sm text-gray-800 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all cursor-pointer flex items-center gap-3"
-              >
-                <img src="https://flagcdn.com/24x18/{selectedCountry.iso}.png" alt={selectedCountry.name} class="w-6 h-[18px] rounded-sm object-cover" />
-                <span class="flex-1 text-left">{selectedCountry.name} (+{selectedCountry.code})</span>
-                <svg class="w-4 h-4 text-gray-400 transition-transform {showCountryDropdown ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-              </button>
-
-              {#if showCountryDropdown}
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="absolute inset-0 fixed z-20" onclick={() => showCountryDropdown = false} onkeydown={() => {}}></div>
-                <div class="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                  {#each countries as country}
-                    <button
-                      type="button"
-                      onclick={() => selectCountry(country.code)}
-                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer {country.code === clientData.phoneCountryCode ? 'bg-gray-100 font-medium' : ''}"
-                    >
-                      <img src="https://flagcdn.com/24x18/{country.iso}.png" alt={country.name} class="w-6 h-[18px] rounded-sm object-cover" />
-                      <span class="flex-1 text-left">{country.name}</span>
-                      <span class="text-gray-400 text-xs">+{country.code}</span>
-                    </button>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-
-            <!-- DDD + Numero -->
-            <div class="flex flex-col sm:flex-row gap-2">
-              {#if isBrazil}
-                <select
-                  id="client-ddd"
-                  bind:value={clientData.phoneDDD}
-                  class="border border-gray-200/90 bg-gray-50/70 rounded-xl px-3 py-3 text-sm text-gray-800 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all w-full sm:min-w-[145px] sm:w-auto cursor-pointer"
-                >
-                  <option value="" disabled>DDD</option>
-                  {#each brDDDs as item}
-                    <option value={item.ddd}>{item.label}</option>
-                  {/each}
-                </select>
-              {:else}
-                <input
-                  id="client-area-code"
-                  type="text"
-                  bind:value={clientData.phoneDDD}
-                  placeholder="Cód. área"
-                  oninput={(e) => {
-                    const input = e.target as HTMLInputElement;
-                    clientData.phoneDDD = input.value.replace(/\D/g, '').slice(0, 5);
-                  }}
-                  class="border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all w-full sm:w-[110px]"
-                />
-              {/if}
-
-              <input
-                id="form-field-phone"
-                type="tel"
-                bind:value={clientData.phone}
-                placeholder={isBrazil ? '99999-9999' : 'Número'}
-                oninput={(e) => {
-                  const input = e.target as HTMLInputElement;
-                  if (isBrazil) {
-                    let v = input.value.replace(/\D/g, '').slice(0, 9);
-                    if (v.length > 5) v = `${v.slice(0,5)}-${v.slice(5)}`;
-                    clientData.phone = v;
-                  }
-                }}
-                class="flex-1 border border-gray-200/90 bg-gray-50/70 rounded-xl px-4 py-3 text-[15px] text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none transition-all"
-              />
-            </div>
-
-            {#if clientData.phoneDDD && clientData.phone}
-              <p class="text-[11px] text-gray-400 mt-1.5 font-mono">
-                +{clientData.phoneCountryCode} ({clientData.phoneDDD}) {clientData.phone}
-              </p>
-            {/if}
-
-            {#if !phoneValid && (clientData.phone || clientData.phoneDDD)}
-              <p class="text-xs text-red-400 mt-1">
-                {#if isBrazil && !clientData.phoneDDD}
-                  Selecione o DDD
-                {:else if !isBrazil && !clientData.phoneDDD.trim()}
-                  Informe o código de área
-                {:else}
-                  Número incompleto
-                {/if}
-              </p>
-            {/if}
-          </div>
-
-          <!-- Botao -->
-          <button
-            onclick={startQuestions}
-            disabled={!clientData.name.trim() || !emailValid || !phoneValid}
-            class="w-full py-3.5 rounded-xl text-[15px] font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all duration-200 active:scale-[0.99] mt-2"
-            style="background: {theme.gradient};"
-          >
-            Começar
-          </button>
-
-          <p class="text-center text-[12px] sm:text-[13px] text-gray-500 mt-3 tracking-wide font-medium">Powered by IT Valley School</p>
-        </div>
-      </div>
+      {@render formCardSnippet()}
 
     {:else if phase === 'questions' && currentNode}
       <div class="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/50 shadow-[0_20px_60px_rgba(15,10,26,0.35)] overflow-hidden">
@@ -773,7 +841,7 @@
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
               <span class="text-xs sm:text-sm font-semibold text-gray-800">{monthNames[calMonth]} {calYear}</span>
-              <button onclick={nextCalMonth} aria-label="Próximo mês" class="p-1.5 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors">
+              <button onclick={nextCalMonth} disabled={!canGoNext} aria-label="Próximo mês" class="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer transition-colors">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
             </div>
@@ -790,6 +858,10 @@
               <div class="py-12 text-center">
                 <div class="w-6 h-6 border-2 border-violet-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
               </div>
+            {:else if isCustomMode && !monthHasAvailability}
+              <div class="py-10 text-center text-xs text-gray-400 px-4">
+                Nenhuma data disponível neste mês.
+              </div>
             {:else}
               <div class="grid grid-cols-7 gap-px p-2">
                 {#each Array(calFirstDay) as _}<div></div>{/each}
@@ -799,21 +871,26 @@
                   {@const info = dateMap[dateStr]}
                   {@const avail = info?.available ?? false}
                   {@const isToday = new Date().toISOString().slice(0, 10) === dateStr}
-                  <button
-                    onclick={() => avail && selectDate(dateStr)}
-                    disabled={!avail}
-                    class="relative aspect-square flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium transition-all
-                    {selectedDate === dateStr
-                      ? 'text-white shadow-md scale-110" style="background: var(--tc);'
-                      : avail
-                        ? 'text-gray-700 hover:bg-violet-500/10 hover:text-violet-600 cursor-pointer'
-                        : 'text-gray-300 cursor-not-allowed'}"
-                  >
-                    {day}
-                    {#if isToday && selectedDate !== dateStr}
-                      <span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500"></span>
-                    {/if}
-                  </button>
+                  {#if isCustomMode && !avail}
+                    <!-- Modo personalizado: dia nao configurado fica oculto -->
+                    <div></div>
+                  {:else}
+                    <button
+                      onclick={() => avail && selectDate(dateStr)}
+                      disabled={!avail}
+                      class="relative aspect-square min-h-[44px] flex items-center justify-center rounded-lg text-sm font-medium transition-all
+                      {selectedDate === dateStr
+                        ? 'text-white shadow-md scale-110" style="background: var(--tc);'
+                        : avail
+                          ? 'text-gray-700 hover:bg-violet-500/10 hover:text-violet-600 cursor-pointer'
+                          : 'text-gray-300 cursor-not-allowed'}"
+                    >
+                      {day}
+                      {#if isToday && selectedDate !== dateStr}
+                        <span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500"></span>
+                      {/if}
+                    </button>
+                  {/if}
                 {/each}
               </div>
             {/if}
@@ -845,7 +922,7 @@
                   {#each morningSlots as slot}
                     <button
                       onclick={() => selectTime(slot)}
-                      class="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer
+                      class="min-h-[48px] py-3 sm:py-2.5 rounded-xl border-2 text-base sm:text-sm font-semibold transition-all cursor-pointer
                       {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}"
                     >{slot}</button>
                   {/each}
@@ -860,7 +937,7 @@
                   {#each afternoonSlots as slot}
                     <button
                       onclick={() => selectTime(slot)}
-                      class="py-2.5 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer
+                      class="min-h-[48px] py-3 sm:py-2.5 rounded-xl border-2 text-base sm:text-sm font-semibold transition-all cursor-pointer
                       {selectedTime === slot ? 'text-white" style="border-color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc);' : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'}"
                     >{slot}</button>
                   {/each}
@@ -984,3 +1061,4 @@
     {/if}
   </div>
 </div>
+{/if}

@@ -8,13 +8,17 @@ export const GET: RequestHandler = async ({ request, url }) => {
 	if (action === 'dates') {
 		const month = url.searchParams.get('month');
 		const year = url.searchParams.get('year');
-		const res = await fetch(backendUrl(`/api/public/scheduling/dates?month=${month}&year=${year}`));
+		const flowId = url.searchParams.get('flow_id');
+		const flowParam = flowId ? `&flow_id=${encodeURIComponent(flowId)}` : '';
+		const res = await fetch(backendUrl(`/api/public/scheduling/dates?month=${month}&year=${year}${flowParam}`));
 		return json(await res.json(), { status: res.status });
 	}
 
 	if (action === 'slots') {
 		const date = url.searchParams.get('date');
-		const res = await fetch(backendUrl(`/api/public/scheduling/slots?date=${date}`));
+		const flowId = url.searchParams.get('flow_id');
+		const flowParam = flowId ? `&flow_id=${encodeURIComponent(flowId)}` : '';
+		const res = await fetch(backendUrl(`/api/public/scheduling/slots?date=${date}${flowParam}`));
 		return json(await res.json(), { status: res.status });
 	}
 

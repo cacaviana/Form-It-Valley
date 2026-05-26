@@ -69,15 +69,15 @@ async def create_submission(request: CreateSubmissionRequest):
 
 
 @router.get("/scheduling/dates")
-async def get_dates(month: int, year: int):
-    """Retorna dias disponiveis (lead agendando — sem auth)."""
-    return await _gcal.get_available_dates(month, year)
+async def get_dates(month: int, year: int, flow_id: Optional[str] = None):
+    """Retorna dias disponiveis (lead agendando — sem auth). flow_id usado para config personalizada."""
+    return await _gcal.get_available_dates(month, year, flow_id)
 
 
 @router.get("/scheduling/slots")
-async def get_slots(date: str):
-    """Retorna horarios disponiveis (lead agendando — sem auth)."""
-    return await _gcal.get_available_slots(date)
+async def get_slots(date: str, flow_id: Optional[str] = None):
+    """Retorna horarios disponiveis (lead agendando — sem auth). flow_id usado para config personalizada."""
+    return await _gcal.get_available_slots(date, flow_id)
 
 
 class PublicSchedulingRequest(BaseModel):
@@ -107,6 +107,18 @@ async def create_scheduling(request: PublicSchedulingRequest):
         )
         meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
         calendar_link = gcal_result.get("html_link", "") if gcal_result else ""
+
+        # Override: se o flow tem meeting_link_override, usa esse link nas notificacoes
+        if request.flow_id:
+            try:
+                from data.repositories.mongo.flow_repository import FlowRepository
+                flow_doc = await FlowRepository().find_by_id(request.flow_id)
+                if flow_doc:
+                    override = flow_doc.get("meeting_link_override")
+                    if isinstance(override, str) and override.strip():
+                        meet_link = override.strip()
+            except Exception:
+                pass
 
         email_task = _notifications.send_scheduling_email(
             lead_name=request.lead_name,

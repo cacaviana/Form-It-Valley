@@ -1,4 +1,4 @@
-import type { FlowNode, FlowEdge, NodeType, FlowNodeData } from '$lib/dto/flows/types';
+import type { FlowNode, FlowEdge, NodeType, FlowNodeData, PageTemplate, PageContent, SchedulingConfig } from '$lib/dto/flows/types';
 import type { Node, Edge } from '@xyflow/svelte';
 
 function generateId() {
@@ -65,16 +65,24 @@ export function createFlowBuilderStore() {
   let acListId = $state('');
   let acListName = $state('');
   let themeColor = $state('violet');
+  let pageTemplate = $state<PageTemplate>('centered');
+  let pageContent = $state<PageContent>({});
+  let schedulingConfig = $state<SchedulingConfig | null>(null);
+  let meetingLinkOverride = $state<string | null>(null);
   let selectedNodeId = $state<string | null>(null);
   let hasChanges = $state(false);
 
-  function loadFlow(flow: { _id?: string; name: string; nodes: FlowNode[]; edges: FlowEdge[]; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string }) {
+  function loadFlow(flow: { _id?: string; name: string; nodes: FlowNode[]; edges: FlowEdge[]; pricing_csv?: string; activecampaign_list_id?: string; activecampaign_list_name?: string; theme_color?: string; page_template?: PageTemplate; page_content?: PageContent; scheduling_config?: SchedulingConfig | null; meeting_link_override?: string | null }) {
     flowId = flow._id || null;
     flowName = flow.name;
     pricingCsv = flow.pricing_csv || '';
     acListId = flow.activecampaign_list_id || '';
     acListName = flow.activecampaign_list_name || '';
     themeColor = flow.theme_color || 'violet';
+    pageTemplate = flow.page_template || 'centered';
+    pageContent = flow.page_content || {};
+    schedulingConfig = flow.scheduling_config ?? null;
+    meetingLinkOverride = flow.meeting_link_override ?? null;
     nodes = toSvelteFlowNodes(flow.nodes);
     edges = toSvelteFlowEdges(flow.edges);
     hasChanges = false;
@@ -156,6 +164,14 @@ export function createFlowBuilderStore() {
     set acListName(v: string) { acListName = v; hasChanges = true; },
     get themeColor() { return themeColor; },
     set themeColor(v: string) { themeColor = v; hasChanges = true; },
+    get pageTemplate() { return pageTemplate; },
+    set pageTemplate(v: PageTemplate) { pageTemplate = v; hasChanges = true; },
+    get pageContent() { return pageContent; },
+    set pageContent(v: PageContent) { pageContent = v; hasChanges = true; },
+    get schedulingConfig() { return schedulingConfig; },
+    set schedulingConfig(v: SchedulingConfig | null) { schedulingConfig = v; hasChanges = true; },
+    get meetingLinkOverride() { return meetingLinkOverride; },
+    set meetingLinkOverride(v: string | null) { meetingLinkOverride = v; hasChanges = true; },
     get selectedNodeId() { return selectedNodeId; },
     set selectedNodeId(v: string | null) { selectedNodeId = v; },
     get hasChanges() { return hasChanges; },

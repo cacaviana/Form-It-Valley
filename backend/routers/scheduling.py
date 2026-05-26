@@ -27,15 +27,15 @@ async def list_schedulings():
 
 
 @router.get("/dates")
-async def get_dates(month: int, year: int):
-    """Retorna dias do mes com disponibilidade."""
-    return await _gcal.get_available_dates(month, year)
+async def get_dates(month: int, year: int, flow_id: Optional[str] = None):
+    """Retorna dias do mes com disponibilidade. Se flow_id informado e o flow tiver config personalizada, usa ela."""
+    return await _gcal.get_available_dates(month, year, flow_id)
 
 
 @router.get("/slots")
-async def get_slots(date: str):
-    """Retorna horarios disponiveis para uma data."""
-    return await _gcal.get_available_slots(date)
+async def get_slots(date: str, flow_id: Optional[str] = None):
+    """Retorna horarios disponiveis para uma data. Se flow_id informado e o flow tiver config personalizada, usa ela."""
+    return await _gcal.get_available_slots(date, flow_id)
 
 
 def _serialize(doc: dict) -> dict:
@@ -79,6 +79,18 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
     )
     meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
     calendar_link = gcal_result.get("html_link", "") if gcal_result else ""
+
+    # Override: se o flow tem meeting_link_override, usa esse link nas notificacoes
+    if request.flow_id:
+        try:
+            from data.repositories.mongo.flow_repository import FlowRepository
+            flow_doc = await FlowRepository().find_by_id(request.flow_id)
+            if flow_doc:
+                override = flow_doc.get("meeting_link_override")
+                if isinstance(override, str) and override.strip():
+                    meet_link = override.strip()
+        except Exception:
+            pass
 
     # 2. Email + WhatsApp em paralelo
     email_task = _notifications.send_scheduling_email(
