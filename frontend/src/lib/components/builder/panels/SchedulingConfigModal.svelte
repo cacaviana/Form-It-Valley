@@ -45,21 +45,31 @@
   let calMonth = $state(new Date().getMonth());
   let calYear = $state(new Date().getFullYear());
 
+  // prevOpen: variavel regular (NAO $state) — usada pra detectar transicao false→true
+  let prevOpen = false;
+
   $effect(() => {
-    // Ler props ANTES do early return pra garantir que sao rastreadas como deps reativas
-    const _value = value;
-    const _link = meetingLinkOverride;
-    const _evt = gcalEventTitle;
-    if (!open) return;
+    const isOpen = open;
+    if (isOpen && !prevOpen) {
+      // transicao false→true: leu props atuais e inicializa state local
+      initLocalState();
+    }
+    prevOpen = isOpen;
+  });
 
-    // Computar tudo em vars locais (sem ler state que sera escrito)
-    const safeDates = Array.isArray(_value?.dates) ? structuredClone(_value.dates) : [];
-    const trimmed = _link?.trim() || '';
-    const evtTitle = _evt?.trim() || '';
+  function initLocalState() {
+    const v = value;
+    const link = meetingLinkOverride;
+    const evt = gcalEventTitle;
+    console.log('[DEBUG SchedulingConfigModal init]', { value: v, meetingLinkOverride: link, gcalEventTitle: evt });
 
-    useGlobal = _value == null;
+    const safeDates = Array.isArray(v?.dates) ? structuredClone(v.dates) : [];
+    const trimmed = link?.trim() || '';
+    const evtTitle = evt?.trim() || '';
+
+    useGlobal = v == null;
     localDates = safeDates;
-    maxBookings = _value?.max_bookings_per_slot ?? 1;
+    maxBookings = v?.max_bookings_per_slot ?? 1;
     linkMode = trimmed ? 'custom' : 'meet';
     localLink = trimmed;
     localEventTitle = evtTitle;
@@ -74,7 +84,7 @@
       calYear = now.getFullYear();
     }
     loadGlobal();
-  });
+  }
 
   async function loadGlobal() {
     try {
