@@ -30,9 +30,20 @@
     orange:  { main: '#EA580C', gradient: 'linear-gradient(135deg, #EA580C, #F97316)', gradientHeader: 'linear-gradient(135deg, #EA580C 0%, #F97316 100%)' },
     cyan:    { main: '#0891B2', gradient: 'linear-gradient(135deg, #0891B2, #06B6D4)', gradientHeader: 'linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)' },
     amber:   { main: '#D97706', gradient: 'linear-gradient(135deg, #D97706, #F59E0B)', gradientHeader: 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)' },
+    red:     { main: '#DC2626', gradient: 'linear-gradient(135deg, #DC2626, #EF4444)', gradientHeader: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)' },
     slate:   { main: '#334155', gradient: 'linear-gradient(135deg, #334155, #475569)', gradientHeader: 'linear-gradient(135deg, #334155 0%, #475569 100%)' }
   };
-  let theme = $derived(themeColorMap[themeColor] || themeColorMap.violet);
+  function buildCustomTheme(hex: string) {
+    return {
+      main: hex,
+      gradient: `linear-gradient(135deg, ${hex}, ${hex}CC)`,
+      gradientHeader: `linear-gradient(135deg, ${hex} 0%, ${hex}CC 100%)`
+    };
+  }
+  let theme = $derived(
+    themeColorMap[themeColor] ||
+    (/^#[0-9a-fA-F]{6}$/.test(themeColor) ? buildCustomTheme(themeColor) : themeColorMap.violet)
+  );
 
   // Dados sample para o preview
   const SAMPLE = {

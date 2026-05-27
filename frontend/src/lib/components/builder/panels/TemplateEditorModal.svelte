@@ -42,10 +42,33 @@
     { id: 'orange', label: 'Laranja', color: '#EA580C', main: '#EA580C', gradientHeader: 'linear-gradient(135deg, #EA580C 0%, #F97316 100%)', gradient: 'linear-gradient(135deg, #EA580C, #F97316)' },
     { id: 'cyan', label: 'Ciano', color: '#0891B2', main: '#0891B2', gradientHeader: 'linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)', gradient: 'linear-gradient(135deg, #0891B2, #06B6D4)' },
     { id: 'amber', label: 'Dourado', color: '#D97706', main: '#D97706', gradientHeader: 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)', gradient: 'linear-gradient(135deg, #D97706, #F59E0B)' },
+    { id: 'red', label: 'Vermelho', color: '#DC2626', main: '#DC2626', gradientHeader: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)', gradient: 'linear-gradient(135deg, #DC2626, #EF4444)' },
     { id: 'slate', label: 'Escuro', color: '#334155', main: '#334155', gradientHeader: 'linear-gradient(135deg, #334155 0%, #475569 100%)', gradient: 'linear-gradient(135deg, #334155, #475569)' }
   ];
 
-  let currentTheme = $derived(themeColors.find(t => t.id === localTheme) || themeColors[0]);
+  function buildCustomTheme(hex: string) {
+    return {
+      id: 'custom',
+      label: 'Personalizado',
+      color: hex,
+      main: hex,
+      gradient: `linear-gradient(135deg, ${hex}, ${hex}CC)`,
+      gradientHeader: `linear-gradient(135deg, ${hex} 0%, ${hex}CC 100%)`
+    };
+  }
+
+  let currentTheme = $derived(
+    themeColors.find(t => t.id === localTheme) ||
+    (/^#[0-9a-fA-F]{6}$/.test(localTheme) ? buildCustomTheme(localTheme) : themeColors[0])
+  );
+
+  let customColor = $state('#000000');
+  let isThemeCustom = $derived(/^#[0-9a-fA-F]{6}$/.test(localTheme));
+  $effect(() => {
+    if (open && /^#[0-9a-fA-F]{6}$/.test(localTheme)) {
+      customColor = localTheme;
+    }
+  });
   let resolvedPreview = $derived(resolvePageContent(localTemplate, localContent));
   let previewBgUrl = $derived(PAGE_BACKGROUND_URL[localTemplate] || '');
 
@@ -118,6 +141,21 @@
                     <span class="text-[10px] font-medium text-gray-600">{tc.label}</span>
                   </button>
                 {/each}
+                <!-- Personalizada -->
+                <label
+                  class="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all cursor-pointer bg-white {isThemeCustom ? 'border-gray-900 shadow-sm' : 'border-transparent hover:border-gray-200'}"
+                  title="Escolher cor personalizada"
+                >
+                  <div class="relative w-7 h-7 rounded-full shadow-sm overflow-hidden border border-gray-200" style={isThemeCustom ? `background: ${localTheme};` : 'background: conic-gradient(from 0deg, #ef4444, #f59e0b, #10b981, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #ef4444);'}>
+                    <input
+                      type="color"
+                      bind:value={customColor}
+                      oninput={(e) => (localTheme = (e.target as HTMLInputElement).value)}
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  <span class="text-[10px] font-medium text-gray-600">Custom</span>
+                </label>
               </div>
             </div>
 

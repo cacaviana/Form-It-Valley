@@ -29,7 +29,7 @@
 
   const themeColorMap: Record<string, string> = {
     violet: '#7C3AED', blue: '#2563EB', emerald: '#059669', rose: '#E11D48',
-    orange: '#EA580C', cyan: '#0891B2', amber: '#D97706', slate: '#334155'
+    orange: '#EA580C', cyan: '#0891B2', amber: '#D97706', red: '#DC2626', slate: '#334155'
   };
 
   // Estado local
@@ -51,10 +51,10 @@
         meet_button_text: _value.meet_button_text ?? DEFAULTS.meet_button_text,
         calendar_button_text: _value.calendar_button_text ?? DEFAULTS.calendar_button_text,
         footer: _value.footer ?? DEFAULTS.footer,
-        header_color: _value.header_color ?? themeColorMap[_theme] ?? DEFAULTS.header_color
+        header_color: _value.header_color ?? themeColorMap[_theme] ?? (/^#[0-9a-fA-F]{6}$/.test(_theme || '') ? _theme : DEFAULTS.header_color)
       };
     } else {
-      local = { ...DEFAULTS, header_color: themeColorMap[_theme] ?? DEFAULTS.header_color };
+      local = { ...DEFAULTS, header_color: themeColorMap[_theme] ?? (/^#[0-9a-fA-F]{6}$/.test(_theme || '') ? _theme : DEFAULTS.header_color) };
     }
   });
 
@@ -91,7 +91,7 @@
   }
 
   function restoreDefaults() {
-    local = { ...DEFAULTS, header_color: themeColorMap[themeColor] ?? DEFAULTS.header_color };
+    local = { ...DEFAULTS, header_color: themeColorMap[themeColor] ?? (/^#[0-9a-fA-F]{6}$/.test(themeColor || '') ? themeColor : DEFAULTS.header_color) };
   }
 
   const placeholders = [

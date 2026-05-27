@@ -126,7 +126,7 @@
 
   const themeColorPreview: Record<string, string> = {
     violet: '#7C3AED', blue: '#2563EB', emerald: '#059669', rose: '#E11D48',
-    orange: '#EA580C', cyan: '#0891B2', amber: '#D97706', slate: '#334155'
+    orange: '#EA580C', cyan: '#0891B2', amber: '#D97706', red: '#DC2626', slate: '#334155'
   };
 
   const templateLabels: Record<PageTemplate, string> = {
@@ -911,7 +911,7 @@
         </div>
 
         <div class="flex items-center gap-2 text-xs text-gray-600">
-          <div class="w-4 h-4 rounded-full border border-white shadow-sm" style="background: {themeColorPreview[themeColor] || themeColorPreview.violet};"></div>
+          <div class="w-4 h-4 rounded-full border border-white shadow-sm" style="background: {themeColorPreview[themeColor] || (/^#[0-9a-fA-F]{6}$/.test(themeColor) ? themeColor : themeColorPreview.violet)};"></div>
           <span>Cor — <strong>{themeColor}</strong></span>
         </div>
 

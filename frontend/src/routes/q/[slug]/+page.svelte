@@ -26,9 +26,27 @@
     orange:  { main: '#EA580C', gradient: 'linear-gradient(135deg, #EA580C, #F97316)', gradientHeader: 'linear-gradient(135deg, #EA580C 0%, #F97316 100%)', ring: 'focus:ring-orange-500/25 focus:border-orange-400', bg: 'bg-orange-600 hover:bg-orange-700', text: 'text-orange-600', hover: 'hover:bg-orange-50', lightBg: 'bg-orange-50' },
     cyan:    { main: '#0891B2', gradient: 'linear-gradient(135deg, #0891B2, #06B6D4)', gradientHeader: 'linear-gradient(135deg, #0891B2 0%, #06B6D4 100%)', ring: 'focus:ring-cyan-500/25 focus:border-cyan-400', bg: 'bg-cyan-600 hover:bg-cyan-700', text: 'text-cyan-600', hover: 'hover:bg-cyan-50', lightBg: 'bg-cyan-50' },
     amber:   { main: '#D97706', gradient: 'linear-gradient(135deg, #D97706, #F59E0B)', gradientHeader: 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)', ring: 'focus:ring-amber-500/25 focus:border-amber-400', bg: 'bg-amber-600 hover:bg-amber-700', text: 'text-amber-600', hover: 'hover:bg-amber-50', lightBg: 'bg-amber-50' },
+    red:     { main: '#DC2626', gradient: 'linear-gradient(135deg, #DC2626, #EF4444)', gradientHeader: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)', ring: 'focus:ring-red-500/25 focus:border-red-400', bg: 'bg-red-600 hover:bg-red-700', text: 'text-red-600', hover: 'hover:bg-red-50', lightBg: 'bg-red-50' },
     slate:   { main: '#334155', gradient: 'linear-gradient(135deg, #334155, #475569)', gradientHeader: 'linear-gradient(135deg, #334155 0%, #475569 100%)', ring: 'focus:ring-slate-500/25 focus:border-slate-400', bg: 'bg-slate-600 hover:bg-slate-700', text: 'text-slate-600', hover: 'hover:bg-slate-50', lightBg: 'bg-slate-50' },
   };
-  let theme = $derived(colorMap[flow?.theme_color || 'violet'] || colorMap.violet);
+  function buildCustomTheme(hex: string) {
+    return {
+      main: hex,
+      gradient: `linear-gradient(135deg, ${hex}, ${hex}CC)`,
+      gradientHeader: `linear-gradient(135deg, ${hex} 0%, ${hex}CC 100%)`,
+      ring: '',
+      bg: '',
+      text: '',
+      hover: '',
+      lightBg: ''
+    };
+  }
+  let theme = $derived.by(() => {
+    const tc = flow?.theme_color || 'violet';
+    if (colorMap[tc]) return colorMap[tc];
+    if (/^#[0-9a-fA-F]{6}$/.test(tc)) return buildCustomTheme(tc);
+    return colorMap.violet;
+  });
   let pageTemplate = $derived(flow?.page_template || 'centered');
   let isPosTemplate = $derived(pageTemplate !== 'centered');
   let pageContentResolved = $derived(resolvePageContent(pageTemplate, flow?.page_content));
