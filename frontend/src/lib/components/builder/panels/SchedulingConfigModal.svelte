@@ -41,7 +41,7 @@
 
   // ── Título do evento no Google Calendar ──
   let localEventTitle = $state('');
-  const DEFAULT_EVENT_TITLE = 'Call Consultor IT Valley - {{nome}}';
+  const DEFAULT_EVENT_TITLE = 'Call Consultor IT Valley';
 
   // ── Agenda do Google Calendar ──
   let localCalendarId = $state('');
@@ -301,7 +301,7 @@
             <span class="text-sm font-semibold text-violet-900">Título do evento no Google Calendar</span>
           </div>
           <p class="text-xs text-gray-600">
-            Como o agendamento aparece na agenda. Deixe vazio para usar o padrão "Call Consultor IT Valley - {`{{nome}}`}".
+            Como o agendamento aparece na agenda. Deixe vazio para usar o padrão "{DEFAULT_EVENT_TITLE}".
           </p>
           <input
             type="text"
@@ -309,11 +309,6 @@
             placeholder={DEFAULT_EVENT_TITLE}
             class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
           />
-          <p class="text-[11px] text-gray-500">
-            Placeholders: <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{nome}}`}</code>
-            <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{data}}`}</code>
-            <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{horario}}`}</code>
-          </p>
         </div>
 
         <!-- Agenda do Google Calendar -->

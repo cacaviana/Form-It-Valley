@@ -368,14 +368,11 @@ class GCalService:
             end_m = (m + 30) % 60
             end_time = f"{str(end_h).zfill(2)}:{str(end_m).zfill(2)}"
 
-            # Monta titulo do evento, resolvendo placeholders
+            # Titulo do evento — texto fixo definido no flow ou default
             if event_title and event_title.strip():
-                resolved_title = (event_title
-                    .replace("{{nome}}", lead_name or "")
-                    .replace("{{data}}", scheduled_date)
-                    .replace("{{horario}}", scheduled_time))
+                resolved_title = event_title.strip()
             else:
-                resolved_title = f"Call Consultor IT Valley - {lead_name}"
+                resolved_title = "Call Consultor IT Valley"
 
             import uuid
             # Criamos o evento SEM attendees pra evitar erro com SA externa (Workspace bloqueia).
