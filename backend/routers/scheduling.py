@@ -38,6 +38,12 @@ async def get_slots(date: str, flow_id: Optional[str] = None):
     return await _gcal.get_available_slots(date, flow_id)
 
 
+@router.get("/calendars")
+async def list_calendars():
+    """Lista agendas Google acessiveis pela service account."""
+    return await _gcal.list_calendars()
+
+
 def _serialize(doc: dict) -> dict:
     """Converte ObjectId para string."""
     return {**doc, "id": str(doc["_id"]), "_id": None}
@@ -89,6 +95,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
         scheduled_date=request.scheduled_date,
         scheduled_time=request.scheduled_time,
         event_title=event_title,
+        flow_id=request.flow_id,
     )
     meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
     calendar_link = gcal_result.get("html_link", "") if gcal_result else ""

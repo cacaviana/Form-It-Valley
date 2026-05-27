@@ -7,6 +7,7 @@
     value,
     meetingLinkOverride = null,
     gcalEventTitle = null,
+    gcalCalendarId = null,
     onSave,
     onCancel
   } = $props<{
@@ -14,7 +15,8 @@
     value: SchedulingConfig | null;
     meetingLinkOverride?: string | null;
     gcalEventTitle?: string | null;
-    onSave: (payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null; gcalEventTitle: string | null }) => void;
+    gcalCalendarId?: string | null;
+    onSave: (payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null; gcalEventTitle: string | null; gcalCalendarId: string | null }) => void;
     onCancel: () => void;
   }>();
 
@@ -41,6 +43,22 @@
   let localEventTitle = $state('');
   const DEFAULT_EVENT_TITLE = 'Call Consultor IT Valley - {{nome}}';
 
+  // ── Agenda do Google Calendar ──
+  let localCalendarId = $state('');
+  let calendarMode = $state<'default' | 'custom'>('default');
+  let calendarList = $state<{ id: string; summary: string; primary: boolean; access_role: string }[]>([]);
+  let loadingCalendars = $state(false);
+
+  async function loadCalendars() {
+    if (calendarList.length > 0) return;
+    loadingCalendars = true;
+    try {
+      const res = await authFetch('/api/scheduling/calendars');
+      if (res.ok) calendarList = await res.json();
+    } catch { /* silent */ }
+    loadingCalendars = false;
+  }
+
   let globalSummary = $state('Carregando configuração global...');
   let calMonth = $state(new Date().getMonth());
   let calYear = $state(new Date().getFullYear());
@@ -60,6 +78,7 @@
     const v = value;
     const link = meetingLinkOverride;
     const evt = gcalEventTitle;
+    const cal = gcalCalendarId;
 
     // Cópia manual (não structuredClone) — value é $state Proxy do Svelte 5 que NÃO é clonável
     const safeDates = Array.isArray(v?.dates)
@@ -67,6 +86,7 @@
       : [];
     const trimmed = link?.trim() || '';
     const evtTitle = evt?.trim() || '';
+    const calId = cal?.trim() || '';
 
     useGlobal = v == null;
     localDates = safeDates;
@@ -74,6 +94,9 @@
     linkMode = trimmed ? 'custom' : 'meet';
     localLink = trimmed;
     localEventTitle = evtTitle;
+    localCalendarId = calId;
+    calendarMode = calId ? 'custom' : 'default';
+    loadCalendars();
 
     if (safeDates.length > 0) {
       const first = safeDates[0].date;
@@ -192,7 +215,8 @@
         };
     const linkPayload = linkMode === 'custom' ? localLink.trim() : null;
     const eventTitlePayload = localEventTitle.trim() ? localEventTitle.trim() : null;
-    onSave({ schedulingConfig: schedulingPayload, meetingLinkOverride: linkPayload, gcalEventTitle: eventTitlePayload });
+    const calendarIdPayload = calendarMode === 'custom' && localCalendarId.trim() ? localCalendarId.trim() : null;
+    onSave({ schedulingConfig: schedulingPayload, meetingLinkOverride: linkPayload, gcalEventTitle: eventTitlePayload, gcalCalendarId: calendarIdPayload });
   }
 
   function toggleUseGlobal() {
@@ -290,6 +314,72 @@
             <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{data}}`}</code>
             <code class="bg-white border border-gray-200 px-1 rounded text-violet-700">{`{{horario}}`}</code>
           </p>
+        </div>
+
+        <!-- Agenda do Google Calendar -->
+        <div class="bg-violet-50/40 border border-violet-100 rounded-xl p-4 space-y-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            <span class="text-sm font-semibold text-violet-900">Agenda do Google Calendar</span>
+          </div>
+
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="cal-mode"
+              value="default"
+              checked={calendarMode === 'default'}
+              onchange={() => (calendarMode = 'default')}
+              class="mt-0.5 accent-violet-600"
+            />
+            <div class="flex-1">
+              <div class="text-sm text-gray-800 font-medium">Usar agenda padrão (do sistema)</div>
+              <p class="text-xs text-gray-500">Agendamentos vão pra agenda global configurada nas variáveis de ambiente.</p>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="cal-mode"
+              value="custom"
+              checked={calendarMode === 'custom'}
+              onchange={() => (calendarMode = 'custom')}
+              class="mt-0.5 accent-violet-600"
+            />
+            <div class="flex-1">
+              <div class="text-sm text-gray-800 font-medium">Escolher agenda específica</div>
+              <p class="text-xs text-gray-500 mb-2">A service account precisa ter acesso de "Fazer alterações" na agenda escolhida.</p>
+              {#if calendarMode === 'custom'}
+                {#if loadingCalendars}
+                  <div class="text-xs text-gray-400 py-2">Carregando agendas...</div>
+                {:else if calendarList.length === 0}
+                  <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 text-[11px] text-amber-700 mb-2">
+                    Nenhuma agenda encontrada. Compartilhe a agenda com o e-mail da service account no Google Calendar.
+                  </div>
+                {:else}
+                  <select
+                    value={localCalendarId}
+                    onchange={(e) => (localCalendarId = (e.target as HTMLSelectElement).value)}
+                    class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 mb-2"
+                  >
+                    <option value="">— Selecione uma agenda —</option>
+                    {#each calendarList as cal}
+                      <option value={cal.id}>{cal.summary}{cal.primary ? ' (primary)' : ''}</option>
+                    {/each}
+                  </select>
+                {/if}
+                <input
+                  type="text"
+                  bind:value={localCalendarId}
+                  placeholder="ou cole o ID manualmente (ex: abc@group.calendar.google.com)"
+                  class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 font-mono"
+                />
+              {/if}
+            </div>
+          </label>
         </div>
 
         <!-- Toggle global -->

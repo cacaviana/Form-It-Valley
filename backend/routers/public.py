@@ -118,6 +118,7 @@ async def create_scheduling(request: PublicSchedulingRequest):
             scheduled_date=request.scheduled_date,
             scheduled_time=request.scheduled_time,
             event_title=event_title,
+            flow_id=request.flow_id,
         )
         meet_link = gcal_result.get("meet_link", "") if gcal_result else ""
         calendar_link = gcal_result.get("html_link", "") if gcal_result else ""

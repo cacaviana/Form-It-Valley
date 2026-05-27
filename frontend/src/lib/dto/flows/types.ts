@@ -122,6 +122,7 @@ export interface Flow {
   scheduling_config?: SchedulingConfig | null;
   meeting_link_override?: string | null;
   gcal_event_title?: string | null;
+  gcal_calendar_id?: string | null;
   email_config?: EmailConfig | null;
   ui_texts?: import('./uiTextDefaults').UITexts | null;
   created_at?: string;

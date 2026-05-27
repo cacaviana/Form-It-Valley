@@ -66,6 +66,9 @@ class FlowFactory:
         # gcal_event_title: None/"" = usa default; string = usa custom (suporta {{nome}})
         evt_title = data.get("gcal_event_title")
         doc["gcal_event_title"] = evt_title if isinstance(evt_title, str) and evt_title.strip() else None
+        # gcal_calendar_id: None/"" = usa agenda global; string = id da agenda
+        cal_id = data.get("gcal_calendar_id")
+        doc["gcal_calendar_id"] = cal_id if isinstance(cal_id, str) and cal_id.strip() else None
         # email_config: None = template padrao; dict = personalizado
         email_cfg = data.get("email_config")
         doc["email_config"] = email_cfg if isinstance(email_cfg, dict) else None
@@ -137,6 +140,12 @@ class FlowFactory:
             update_doc["gcal_event_title"] = evt_title if isinstance(evt_title, str) and evt_title.strip() else None
         else:
             update_doc["gcal_event_title"] = existing.get("gcal_event_title")
+        # gcal_calendar_id (mesma regra)
+        if "gcal_calendar_id" in data:
+            cal_id = data["gcal_calendar_id"]
+            update_doc["gcal_calendar_id"] = cal_id if isinstance(cal_id, str) and cal_id.strip() else None
+        else:
+            update_doc["gcal_calendar_id"] = existing.get("gcal_calendar_id")
         # email_config: null = padrao, dict = personalizado
         if "email_config" in data:
             email_cfg = data["email_config"]

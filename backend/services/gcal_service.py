@@ -39,6 +39,64 @@ class GCalService:
     def _get_calendar_id(self) -> str:
         return settings.google_calendar_id or "primary"
 
+    async def _resolve_calendar_id(self, flow_id: Optional[str]) -> str:
+        """Agenda do flow tem prioridade; senao cai pra global."""
+        if flow_id:
+            try:
+                from data.repositories.mongo.flow_repository import FlowRepository
+                flow_doc = await FlowRepository().find_by_id(flow_id)
+                if flow_doc:
+                    cal = flow_doc.get("gcal_calendar_id")
+                    if isinstance(cal, str) and cal.strip():
+                        return cal.strip()
+            except Exception:
+                pass
+        return self._get_calendar_id()
+
+    def _sync_list_calendars(self) -> list:
+        calendar = self._get_calendar_client()
+        # showHidden=True pra incluir agendas compartilhadas que estao "ocultas" na lista da SA
+        res = calendar.calendarList().list(showHidden=True).execute()
+        return res.get("items", [])
+
+    def _sync_subscribe_calendar(self, calendar_id: str) -> dict:
+        """Adiciona uma agenda na calendarList da SA pra que apareca em list_calendars."""
+        calendar = self._get_calendar_client()
+        return calendar.calendarList().insert(body={"id": calendar_id}).execute()
+
+    async def subscribe_to_calendar(self, calendar_id: str) -> bool:
+        """Garante que uma agenda esta na lista da SA (necessario pra ela aparecer em list_calendars).
+
+        Se a SA ja tem acesso (foi compartilhada) mas a agenda nao apareceu automaticamente
+        na calendarList, chamar isso adiciona explicitamente. Idempotente — se ja esta, retorna ok.
+        """
+        if not calendar_id:
+            return False
+        try:
+            await asyncio.to_thread(self._sync_subscribe_calendar, calendar_id)
+            return True
+        except Exception as e:
+            # 409 Conflict = ja esta na lista (ok). Outros erros = problema (sem acesso, etc)
+            err_str = str(e)
+            if "409" in err_str or "duplicate" in err_str.lower():
+                return True
+            logger.warning(f"GCal subscribe_to_calendar ({calendar_id}) error: {e}")
+            return False
+
+    async def list_calendars(self) -> list[dict]:
+        """Lista agendas acessiveis pela service account."""
+        try:
+            items = await asyncio.to_thread(self._sync_list_calendars)
+            return [{
+                "id": c.get("id", ""),
+                "summary": c.get("summary", ""),
+                "primary": bool(c.get("primary", False)),
+                "access_role": c.get("accessRole", "")
+            } for c in items if c.get("id")]
+        except Exception as e:
+            logger.error(f"GCal list_calendars error: {e}")
+            return []
+
     async def _get_global_config(self) -> tuple[int, int, int]:
         """Retorna config global (morning_slots, afternoon_slots, max_bookings_per_slot)."""
         try:
@@ -147,7 +205,7 @@ class GCalService:
         # Buscar eventos do mes (em ambos os modos, pra calcular bookings)
         events_per_day: dict[str, int] = {}
         try:
-            cal_id = self._get_calendar_id()
+            cal_id = await self._resolve_calendar_id(flow_id)
             start_date = f"{year}-{str(month).zfill(2)}-01T00:00:00-03:00"
             end_date = f"{year}-{str(month).zfill(2)}-{days_in_month}T23:59:59-03:00"
             events = await asyncio.to_thread(self._sync_list_events, cal_id, start_date, end_date)
@@ -212,7 +270,7 @@ class GCalService:
         """
         flow_cfg = await self._get_flow_custom_config(flow_id)
         try:
-            cal_id = self._get_calendar_id()
+            cal_id = await self._resolve_calendar_id(flow_id)
             events = await asyncio.to_thread(
                 self._sync_list_events, cal_id,
                 f"{date_str}T00:00:00-03:00",
@@ -295,14 +353,15 @@ class GCalService:
         scheduled_date: str,
         scheduled_time: str,
         event_title: Optional[str] = None,
+        flow_id: Optional[str] = None,
     ) -> Optional[dict]:
         """Cria evento no Google Calendar. Retorna {event_id, html_link}.
 
         event_title aceita placeholders: {{nome}}, {{data}}, {{horario}}.
-        Se None/"" usa default 'Call Consultor IT Valley - {nome}'.
+        flow_id usado pra resolver agenda customizada (gcal_calendar_id) e config personalizada.
         """
         try:
-            cal_id = self._get_calendar_id()
+            cal_id = await self._resolve_calendar_id(flow_id)
 
             h, m = int(scheduled_time[:2]), int(scheduled_time[3:])
             end_h = h + (1 if m + 30 >= 60 else 0)
@@ -319,6 +378,9 @@ class GCalService:
                 resolved_title = f"Call Consultor IT Valley - {lead_name}"
 
             import uuid
+            # Criamos o evento SEM attendees pra evitar erro com SA externa (Workspace bloqueia).
+            # O convite oficial nao chega no lead — em vez disso, o email do Resend (no-reply) leva
+            # um .ics anexado que o lead pode adicionar manualmente.
             event = {
                 "summary": resolved_title,
                 "description": f"Lead: {lead_name}\nEmail: {lead_email}\nTelefone: {lead_phone or 'N/A'}\n\nAgendado via FormItValley",
@@ -330,9 +392,6 @@ class GCalService:
                     "dateTime": f"{scheduled_date}T{end_time}:00",
                     "timeZone": "America/Sao_Paulo",
                 },
-                "attendees": [
-                    {"email": lead_email},
-                ],
                 "conferenceData": {
                     "createRequest": {
                         "requestId": str(uuid.uuid4()),
@@ -345,20 +404,14 @@ class GCalService:
                 },
             }
 
-            # Tentar criar com Meet + attendees
+            # Tenta com Meet; se falhar (agenda nao suporta), cria sem Meet
             meet_link = ""
             try:
                 res = await asyncio.to_thread(self._sync_create_event_with_meet, cal_id, event)
             except Exception as err1:
-                logger.warning(f"Criacao com attendees falhou (DWD?): {err1}")
-                # SA sem DWD nao pode convidar attendees — remover e tentar novamente
-                event.pop("attendees", None)
-                try:
-                    res = await asyncio.to_thread(self._sync_create_event_with_meet, cal_id, event)
-                except Exception as err2:
-                    logger.warning(f"Meet nao suportado, criando sem: {err2}")
-                    event.pop("conferenceData", None)
-                    res = await asyncio.to_thread(self._sync_create_event, cal_id, event)
+                logger.warning(f"Meet nao suportado nessa agenda, criando sem: {err1}")
+                event.pop("conferenceData", None)
+                res = await asyncio.to_thread(self._sync_create_event, cal_id, event)
 
             conference = res.get("conferenceData", {})
             for ep in conference.get("entryPoints", []):

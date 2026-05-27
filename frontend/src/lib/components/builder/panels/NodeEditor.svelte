@@ -31,6 +31,8 @@
     onMeetingLinkOverrideChange = (_link: string | null) => {},
     gcalEventTitle = null as string | null,
     onGcalEventTitleChange = (_t: string | null) => {},
+    gcalCalendarId = null as string | null,
+    onGcalCalendarIdChange = (_id: string | null) => {},
     emailConfig = null as EmailConfig | null,
     onEmailConfigChange = (_cfg: EmailConfig | null) => {},
     uiTexts = null as UITexts | null,
@@ -56,6 +58,8 @@
     onMeetingLinkOverrideChange?: (link: string | null) => void;
     gcalEventTitle?: string | null;
     onGcalEventTitleChange?: (t: string | null) => void;
+    gcalCalendarId?: string | null;
+    onGcalCalendarIdChange?: (id: string | null) => void;
     emailConfig?: EmailConfig | null;
     onEmailConfigChange?: (cfg: EmailConfig | null) => void;
     uiTexts?: UITexts | null;
@@ -96,10 +100,11 @@
     showTemplateModal = false;
   }
 
-  function handleSchedulingSave(payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null; gcalEventTitle: string | null }) {
+  function handleSchedulingSave(payload: { schedulingConfig: SchedulingConfig | null; meetingLinkOverride: string | null; gcalEventTitle: string | null; gcalCalendarId: string | null }) {
     onSchedulingConfigChange(payload.schedulingConfig);
     onMeetingLinkOverrideChange(payload.meetingLinkOverride);
     onGcalEventTitleChange(payload.gcalEventTitle);
+    onGcalCalendarIdChange(payload.gcalCalendarId);
     showSchedulingModal = false;
   }
 
@@ -1020,6 +1025,7 @@
   value={schedulingConfig}
   meetingLinkOverride={meetingLinkOverride}
   gcalEventTitle={gcalEventTitle}
+  gcalCalendarId={gcalCalendarId}
   onSave={handleSchedulingSave}
   onCancel={() => (showSchedulingModal = false)}
 />

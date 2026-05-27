@@ -43,6 +43,7 @@ class FlowService:
             flow_doc["slug"] = f"{base_slug}-{count}"
 
         saved = await self._repository.insert(flow_doc)
+        await self._subscribe_custom_calendar(saved)
         return self._mapper.to_response(saved)
 
     async def update(self, id: str, data: dict) -> Optional[dict]:
@@ -53,7 +54,23 @@ class FlowService:
         updated = await self._repository.update(id, update_data)
         if not updated:
             return None
+        await self._subscribe_custom_calendar(updated)
         return self._mapper.to_response(updated)
+
+    async def _subscribe_custom_calendar(self, flow_doc: dict) -> None:
+        """Se o flow tem gcal_calendar_id custom, garante que a agenda esta na lista da SA.
+
+        Idempotente: chamar com a mesma agenda repetidas vezes nao causa problema.
+        Falhas (ex: SA sem acesso) sao silenciosas — o flow continua sendo salvo.
+        """
+        cal_id = flow_doc.get("gcal_calendar_id")
+        if not (isinstance(cal_id, str) and cal_id.strip()):
+            return
+        try:
+            from services.gcal_service import GCalService
+            await GCalService().subscribe_to_calendar(cal_id.strip())
+        except Exception:
+            pass
 
     async def delete(self, id: str) -> bool:
         return await self._repository.delete(id)
