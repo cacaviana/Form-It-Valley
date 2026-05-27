@@ -1039,7 +1039,7 @@
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-800 mb-2">{uiT.done_title}</h3>
-          <p class="text-sm text-gray-500 mb-4">{schedulingResult?.message || uiT.done_subtitle}</p>
+          <p class="text-sm text-gray-500 mb-4">{uiT.done_subtitle}</p>
 
           <div class="border" style="background: color-mix(in srgb, var(--tc) 10%, transparent); border-color: color-mix(in srgb, var(--tc) 20%, transparent); rounded-xl p-4 text-left space-y-2 mb-4">
             <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
