@@ -22,13 +22,17 @@ class NotificationService:
         calendar_link: str = "",
         meet_link: str = "",
         email_config: Optional[dict] = None,
+        event_title: Optional[str] = None,
+        event_id: Optional[str] = None,
     ) -> bool:
         api_key = settings.resend_api_key
         if not api_key:
             logger.warning("RESEND_API_KEY nao configurada — e-mail nao enviado")
             return False
 
-        from_email = settings.email_from or "onboarding@resend.dev"
+        from_email_addr = settings.email_from or "onboarding@resend.dev"
+        # Forca remetente exibido como "no-reply" (nao expoe nome real do remetente)
+        from_email = f"no-reply <{from_email_addr}>"
         formatted_date = _format_date_pt_br(scheduled_date)
 
         # Defaults + override do email_config
@@ -75,6 +79,21 @@ class NotificationService:
         </div>
         """
 
+        # Gera ICS pra anexar — assim Gmail/Outlook adicionam o evento na agenda do lead automaticamente
+        ics_content = _build_ics(
+            title=event_title or header_title or "Agendamento",
+            scheduled_date=scheduled_date,
+            scheduled_time=scheduled_time,
+            description=f"{body_text}\n\n{('Meet: ' + meet_link) if meet_link else ''}\n{('Calendar: ' + calendar_link) if calendar_link else ''}".strip(),
+            location=meet_link or calendar_link or "",
+            organizer_email=from_email_addr,
+            attendee_email=lead_email,
+            attendee_name=lead_name,
+            uid=event_id,
+        )
+        import base64 as _b64
+        ics_b64 = _b64.b64encode(ics_content.encode("utf-8")).decode("ascii")
+
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 res = await client.post(
@@ -88,6 +107,13 @@ class NotificationService:
                         "to": [lead_email],
                         "subject": subject,
                         "html": html_body,
+                        "attachments": [
+                            {
+                                "filename": "agendamento.ics",
+                                "content": ics_b64,
+                                "content_type": "text/calendar; charset=utf-8; method=REQUEST",
+                            }
+                        ],
                     },
                 )
 
@@ -228,3 +254,80 @@ def _format_date_pt_br(date_str: str) -> str:
         return f"{weekday}, {dt.day} de {month} de {dt.year}"
     except Exception:
         return date_str
+
+
+def _ics_escape(text: str) -> str:
+    """Escapa caracteres especiais no ICS conforme RFC 5545."""
+    return (text or "").replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+
+
+def _build_ics(
+    title: str,
+    scheduled_date: str,
+    scheduled_time: str,
+    description: str,
+    location: str,
+    organizer_email: str,
+    attendee_email: str,
+    attendee_name: str,
+    uid: Optional[str] = None,
+    duration_minutes: int = 30,
+) -> str:
+    """Gera arquivo ICS (RFC 5545) pra anexar no email — funciona em Gmail/Outlook/Apple Calendar.
+
+    O lead recebe o email e o cliente de email reconhece o anexo, oferecendo botao
+    "Adicionar a agenda" ou exibindo o evento inline.
+    """
+    import uuid as _uuid
+    from datetime import timedelta
+
+    if not uid:
+        uid = f"{_uuid.uuid4()}@formitvalley"
+
+    # Parse data/hora local (America/Sao_Paulo)
+    try:
+        start_local = datetime.strptime(f"{scheduled_date} {scheduled_time}", "%Y-%m-%d %H:%M")
+    except Exception:
+        start_local = datetime.now()
+    end_local = start_local + timedelta(minutes=duration_minutes)
+
+    # Formato sem TZ — usaremos TZID nos campos pra Sao Paulo
+    def fmt_local(dt: datetime) -> str:
+        return dt.strftime("%Y%m%dT%H%M%S")
+
+    # DTSTAMP em UTC
+    dtstamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//FormItValley//Scheduling//PT-BR",
+        "METHOD:REQUEST",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VTIMEZONE",
+        "TZID:America/Sao_Paulo",
+        "BEGIN:STANDARD",
+        "DTSTART:19700101T000000",
+        "TZOFFSETFROM:-0300",
+        "TZOFFSETTO:-0300",
+        "TZNAME:BRT",
+        "END:STANDARD",
+        "END:VTIMEZONE",
+        "BEGIN:VEVENT",
+        f"UID:{uid}",
+        f"DTSTAMP:{dtstamp}",
+        f"DTSTART;TZID=America/Sao_Paulo:{fmt_local(start_local)}",
+        f"DTEND;TZID=America/Sao_Paulo:{fmt_local(end_local)}",
+        f"SUMMARY:{_ics_escape(title)}",
+        f"DESCRIPTION:{_ics_escape(description)}",
+        f"LOCATION:{_ics_escape(location)}",
+        f"ORGANIZER;CN={_ics_escape('No Reply')}:mailto:{organizer_email}",
+        f"ATTENDEE;CN={_ics_escape(attendee_name)};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:{attendee_email}",
+        "STATUS:CONFIRMED",
+        "TRANSP:OPAQUE",
+        "SEQUENCE:0",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ]
+    # CRLF é exigido pelo padrao
+    return "\r\n".join(lines)

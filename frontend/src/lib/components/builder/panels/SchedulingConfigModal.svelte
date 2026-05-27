@@ -51,7 +51,6 @@
   $effect(() => {
     const isOpen = open;
     if (isOpen && !prevOpen) {
-      // transicao false→true: leu props atuais e inicializa state local
       initLocalState();
     }
     prevOpen = isOpen;
@@ -61,9 +60,11 @@
     const v = value;
     const link = meetingLinkOverride;
     const evt = gcalEventTitle;
-    console.log('[DEBUG SchedulingConfigModal init]', { value: v, meetingLinkOverride: link, gcalEventTitle: evt });
 
-    const safeDates = Array.isArray(v?.dates) ? structuredClone(v.dates) : [];
+    // Cópia manual (não structuredClone) — value é $state Proxy do Svelte 5 que NÃO é clonável
+    const safeDates = Array.isArray(v?.dates)
+      ? v.dates.map((d: SchedulingDateEntry) => ({ date: d.date, times: [...(d.times || [])] }))
+      : [];
     const trimmed = link?.trim() || '';
     const evtTitle = evt?.trim() || '';
 

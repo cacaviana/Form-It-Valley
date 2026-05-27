@@ -85,7 +85,9 @@ class FlowFactory:
         if not has_start:
             raise ValueError("Flow precisa ter pelo menos um no de inicio (start)")
 
-        slug = data.get("slug") or cls._generate_slug(data["name"])
+        # Preserva o slug existente — NAO regenera do nome no update
+        # (regenerar causa conflito quando ha multiplos flows com mesmo nome)
+        slug = data.get("slug") or existing.get("slug") or cls._generate_slug(data["name"])
 
         update_doc = {
             "name": data["name"],

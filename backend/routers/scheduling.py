@@ -110,6 +110,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
             pass
 
     # 2. Email + WhatsApp em paralelo
+    gcal_event_id_local = gcal_result.get("event_id") if gcal_result else None
     email_task = _notifications.send_scheduling_email(
         lead_name=request.lead_name,
         lead_email=request.lead_email,
@@ -118,6 +119,8 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
         calendar_link=calendar_link,
         meet_link=meet_link,
         email_config=email_cfg,
+        event_title=event_title,
+        event_id=gcal_event_id_local,
     )
 
     if request.lead_phone:

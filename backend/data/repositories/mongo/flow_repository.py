@@ -20,10 +20,12 @@ class FlowRepository(BaseRepository):
     async def find_by_id(self, id: str) -> Optional[dict]:
         if not ObjectId.is_valid(id):
             return None
-        return await self._collection.find_one({"_id": ObjectId(id)})
+        # Filtra flows soft-deleted (active=False)
+        return await self._collection.find_one({"_id": ObjectId(id), "active": {"$ne": False}})
 
     async def find_by_slug(self, slug: str) -> Optional[dict]:
-        return await self._collection.find_one({"slug": slug})
+        # Filtra flows soft-deleted (active=False)
+        return await self._collection.find_one({"slug": slug, "active": {"$ne": False}})
 
     async def count_slugs_starting_with(self, slug_prefix: str) -> int:
         """Conta quantos flows tem slug que comeca com o prefixo (para gerar slug unico)."""
