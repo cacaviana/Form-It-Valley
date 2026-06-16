@@ -84,6 +84,19 @@ async def health():
         return {"status": "unhealthy", "mongodb": str(e)}
 
 
+from itvalleysecurity.exceptions import InvalidToken
+
+
+@app.exception_handler(InvalidToken)
+async def invalid_token_handler(request: Request, exc: InvalidToken):
+    """Token expirado/invalido -> 401 (e nao 500), para o front deslogar o usuario."""
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Your token has expired. Please log in again."},
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}")

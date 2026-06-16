@@ -90,8 +90,8 @@ async def export_submission(submission_id: str):
 
 
 @router.delete("/{submission_id}", status_code=204)
-async def delete_submission(submission_id: str):
-    """Remove submission."""
-    deleted = await _service.delete(submission_id)
-    if not deleted:
+async def hide_submission(submission_id: str):
+    """Oculta a submission (soft-delete): some das listagens, mas permanece no banco."""
+    hidden = await _service.hide(submission_id)
+    if not hidden:
         raise HTTPException(status_code=404, detail="Submission nao encontrada")

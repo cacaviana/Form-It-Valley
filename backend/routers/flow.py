@@ -1,10 +1,15 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from dtos.flow.save_flow.request import SaveFlowRequest
 from services.flow_service import FlowService
 
 router = APIRouter(prefix="/api/flows", tags=["flows"])
 
 _service = FlowService()
+
+
+class DuplicateFlowRequest(BaseModel):
+    name: str
 
 
 @router.get("")
@@ -38,6 +43,21 @@ async def create_flow(request: SaveFlowRequest):
         return await _service.create(request.model_dump())
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.post("/{flow_id}/duplicate", status_code=201)
+async def duplicate_flow(flow_id: str, request: DuplicateFlowRequest):
+    """Duplica um flow existente com um novo nome."""
+    name = (request.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Nome do novo fluxo e obrigatorio")
+    try:
+        result = await _service.duplicate(flow_id, name)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    if not result:
+        raise HTTPException(status_code=404, detail="Flow nao encontrado")
+    return result
 
 
 @router.put("/{flow_id}")

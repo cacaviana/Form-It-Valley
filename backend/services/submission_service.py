@@ -80,6 +80,9 @@ class SubmissionService:
     async def delete(self, id: str) -> bool:
         return await self._repository.delete(id)
 
+    async def hide(self, id: str) -> bool:
+        return await self._repository.hide(id)
+
 
 def _build_catalog_map(nodes: list) -> dict[str, str]:
     """Constrói mapa { node_id:answer_value → catalogProduct | __SKIP__ | __QTY__:product } a partir dos nós do flow.

@@ -47,10 +47,7 @@
 <div class="min-h-screen bg-white">
   <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-10">
     <div class="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-      <button onclick={() => goto('/admin/scheduling')} class="text-sm text-gray-500 hover:text-gray-800 cursor-pointer flex items-center gap-1.5">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-        {_('back')}
-      </button>
+      <div></div>
       <div class="flex gap-0.5 bg-gray-100 rounded-full p-0.5">
         {#each (['pt', 'fr', 'en', 'es'] as const) as l}
           <button onclick={() => lang = l} class="w-9 h-8 rounded-full text-xs font-bold uppercase cursor-pointer transition-all {lang === l ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}">{l}</button>

@@ -8,5 +8,17 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 	if (token) {
 		headers.set('Authorization', `Bearer ${token}`);
 	}
-	return fetch(url, { ...options, headers });
+	const res = await fetch(url, { ...options, headers });
+
+	// Token expirado/invalido: limpa a sessao e manda pro login.
+	if (res.status === 401 && typeof window !== 'undefined') {
+		localStorage.removeItem('access_token');
+		localStorage.removeItem('refresh_token');
+		localStorage.removeItem('user');
+		if (window.location.pathname !== '/login') {
+			window.location.href = '/login';
+		}
+	}
+
+	return res;
 }

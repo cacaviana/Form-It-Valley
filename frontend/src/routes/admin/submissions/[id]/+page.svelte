@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { authFetch } from '$lib/utils/auth-fetch';
 
@@ -50,12 +49,6 @@
 <div class="min-h-screen bg-gray-50">
   <header class="bg-white border-b px-6 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <button onclick={() => goto('/admin/submissions')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </button>
-      <div class="h-5 w-px bg-gray-200"></div>
       <div>
         <h1 class="text-lg font-bold text-gray-900">Detalhe da resposta</h1>
         <p class="text-xs text-gray-500">{submission?.client_name || '...'}</p>

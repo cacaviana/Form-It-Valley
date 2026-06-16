@@ -46,6 +46,23 @@ class FlowService:
         await self._subscribe_custom_calendar(saved)
         return self._mapper.to_response(saved)
 
+    async def duplicate(self, id: str, new_name: str) -> Optional[dict]:
+        """Duplica um flow existente com um novo nome.
+
+        Copia todos os campos (nodes, edges, configs, etc.), regenera o slug
+        a partir do novo nome (garantindo unicidade via create) e nasce como rascunho.
+        """
+        existing = await self._repository.find_by_id(id)
+        if not existing:
+            return None
+        data = self._mapper.to_response(existing)
+        # Remove identidade/versao do original — create() gera tudo novo
+        for key in ("_id", "slug", "version", "created_at", "updated_at"):
+            data.pop(key, None)
+        data["name"] = new_name
+        data["status"] = "draft"
+        return await self.create(data)
+
     async def update(self, id: str, data: dict) -> Optional[dict]:
         existing = await self._repository.find_by_id(id)
         if not existing:

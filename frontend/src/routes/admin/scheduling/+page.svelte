@@ -1,17 +1,25 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { authFetch } from '$lib/utils/auth-fetch';
+
+  interface QualifyingAnswer {
+    node_id?: string;
+    question?: string;
+    value?: string;
+    label?: string;
+  }
 
   interface Scheduling {
     id: string;
     lead_name: string;
     lead_email: string;
     lead_phone: string;
+    lead_address?: string;
     scheduled_date: string;
     scheduled_time: string;
     status: string;
     flow_slug: string;
+    qualifying_answers?: QualifyingAnswer[];
     gcal_event_link: string | null;
     email_sent: boolean;
     whatsapp_sent: boolean;
@@ -27,6 +35,7 @@
   let schedulings = $state<Scheduling[]>([]);
   let dates = $state<DateSlot[]>([]);
   let loading = $state(true);
+  let selected = $state<Scheduling | null>(null);
 
   let calMonth = $state(new Date().getMonth());
   let calYear = $state(new Date().getFullYear());
@@ -41,7 +50,7 @@
 
   async function loadSchedulings() {
     try {
-      const res = await authFetch('/api/scheduling');
+      const res = await authFetch(`/api/scheduling?month=${calMonth + 1}&year=${calYear}`);
       if (res.ok) schedulings = await res.json();
     } catch (e) { /* silent */ }
   }
@@ -56,13 +65,13 @@
   async function prevMonth() {
     if (calMonth === 0) { calMonth = 11; calYear--; }
     else calMonth--;
-    await loadDates();
+    await Promise.all([loadDates(), loadSchedulings()]);
   }
 
   async function nextMonth() {
     if (calMonth === 11) { calMonth = 0; calYear++; }
     else calMonth++;
-    await loadDates();
+    await Promise.all([loadDates(), loadSchedulings()]);
   }
 
   function formatDate(dateStr: string): string {
@@ -93,9 +102,7 @@
 
   let weeks = $derived(getCalendarWeeks(dates));
 
-  // Agendas livres daqui pra frente no mes
   let today = $derived(new Date().toISOString().split('T')[0]);
-  let agendasLivres = $derived(dates.filter(d => d.date >= today).reduce((sum, d) => sum + d.slots_count, 0));
 
   // Agendamentos filtrados pelo mes selecionado
   let schedulingsDoMes = $derived(schedulings.filter(s => {
@@ -103,9 +110,6 @@
     return y === calYear && m === calMonth + 1;
   }));
   let agendadosNoMes = $derived(schedulingsDoMes.length);
-
-  // Total de horarios do mes (dia 1 ao ultimo dia)
-  let totalMes = $derived(dates.reduce((sum, d) => sum + d.slots_count, 0));
 
   // Agendados daqui pra frente (no mes selecionado)
   let agendadosFuturos = $derived(schedulings.filter(s => {
@@ -128,12 +132,6 @@
 <div class="min-h-screen bg-gray-50">
   <header class="bg-white border-b px-6 py-4 flex justify-between items-center">
     <div class="flex items-center gap-3">
-      <button onclick={() => goto('/admin')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </button>
-      <div class="h-5 w-px bg-gray-200"></div>
       <h1 class="text-xl font-bold text-gray-900">Agendamentos</h1>
     </div>
   </header>
@@ -195,20 +193,14 @@
           <!-- Stats -->
           <div class="grid grid-cols-2 gap-3 mt-4">
             <div class="bg-white rounded-xl border p-4 text-center">
-              <p class="text-2xl font-bold text-gray-800">{totalMes}</p>
-              <p class="text-xs text-gray-500">Total do mes</p>
-            </div>
-            <div class="bg-white rounded-xl border p-4 text-center">
-              <p class="text-2xl font-bold text-green-600">{agendasLivres}</p>
-              <p class="text-xs text-gray-500">Agendas livres no mes</p>
-            </div>
-            <div class="bg-white rounded-xl border p-4 text-center">
               <p class="text-2xl font-bold text-blue-600">{agendadosNoMes}</p>
-              <p class="text-xs text-gray-500">Agendados no mes</p>
+              <p class="text-xs font-medium text-gray-700">Agendados no mes</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">Total de agendamentos do mes selecionado</p>
             </div>
             <div class="bg-white rounded-xl border p-4 text-center">
               <p class="text-2xl font-bold text-purple-600">{agendadosFuturos}</p>
-              <p class="text-xs text-gray-500">Agendados daqui pra frente</p>
+              <p class="text-xs font-medium text-gray-700">Agendados daqui pra frente</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">Agendamentos de hoje em diante no mes</p>
             </div>
           </div>
         </div>
@@ -231,6 +223,7 @@
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Data / Hora</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Notificacoes</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Respostas</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -263,6 +256,18 @@
                           {/if}
                         </div>
                       </td>
+                      <td class="px-4 py-3">
+                        {#if s.qualifying_answers && s.qualifying_answers.length > 0}
+                          <button
+                            onclick={() => selected = s}
+                            class="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+                          >
+                            Ver respostas ({s.qualifying_answers.length})
+                          </button>
+                        {:else}
+                          <span class="text-xs text-gray-300">-</span>
+                        {/if}
+                      </td>
                     </tr>
                   {/each}
                 </tbody>
@@ -275,3 +280,50 @@
     {/if}
   </main>
 </div>
+
+<!-- Modal: respostas do lead -->
+{#if selected}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    onclick={() => selected = null}
+    role="presentation"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
+      onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="flex items-start justify-between px-6 py-4 border-b">
+        <div>
+          <h3 class="text-base font-bold text-gray-900">{selected.lead_name}</h3>
+          <p class="text-xs text-gray-500">{selected.lead_email}</p>
+          <p class="text-xs text-gray-400">{formatDate(selected.scheduled_date)} as {selected.scheduled_time}</p>
+        </div>
+        <button onclick={() => selected = null} class="text-gray-400 hover:text-gray-700 cursor-pointer p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div class="px-6 py-4 overflow-y-auto">
+        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Respostas do lead</h4>
+        {#if selected.qualifying_answers && selected.qualifying_answers.length > 0}
+          <div class="space-y-3">
+            {#each selected.qualifying_answers as ans, i}
+              <div class="border-l-2 border-blue-100 pl-3">
+                <p class="text-xs text-gray-500">{ans.question || `Pergunta ${i + 1}`}</p>
+                <p class="text-sm font-medium text-gray-900">{ans.label || ans.value || '-'}</p>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-sm text-gray-500">Nenhuma resposta registrada.</p>
+        {/if}
+      </div>
+
+      <div class="px-6 py-3 border-t flex justify-end">
+        <button onclick={() => selected = null} class="text-sm text-gray-600 hover:text-gray-900 px-4 py-2 cursor-pointer">Fechar</button>
+      </div>
+    </div>
+  </div>
+{/if}

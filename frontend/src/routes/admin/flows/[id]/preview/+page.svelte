@@ -115,12 +115,6 @@
   <!-- Header admin do preview -->
   <header class="bg-white border-b px-6 py-3 flex items-center justify-between z-10">
     <div class="flex items-center gap-3">
-      <button onclick={() => goto('/admin/scheduling')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </button>
-      <div class="h-5 w-px bg-gray-200"></div>
       <div>
         <h1 class="text-sm font-bold text-gray-900">Previa: {flow?.name || '...'}</h1>
         <p class="text-xs text-gray-500">Simulação do formulário — como o lead vai ver</p>

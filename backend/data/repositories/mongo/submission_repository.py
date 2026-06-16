@@ -14,11 +14,13 @@ class SubmissionRepository(BaseRepository):
         return mongodb_client.database[self._collection_name]
 
     async def find_all(self) -> list[dict]:
-        cursor = self._collection.find().sort("created_at", -1)
+        cursor = self._collection.find({"hidden": {"$ne": True}}).sort("created_at", -1)
         return await cursor.to_list(length=200)
 
     async def find_by_flow(self, flow_id: str) -> list[dict]:
-        cursor = self._collection.find({"flow_id": flow_id}).sort("created_at", -1)
+        cursor = self._collection.find(
+            {"flow_id": flow_id, "hidden": {"$ne": True}}
+        ).sort("created_at", -1)
         return await cursor.to_list(length=200)
 
     async def find_by_id(self, id: str) -> Optional[dict]:
@@ -46,3 +48,13 @@ class SubmissionRepository(BaseRepository):
             return False
         result = await self._collection.delete_one({"_id": ObjectId(id)})
         return result.deleted_count > 0
+
+    async def hide(self, id: str) -> bool:
+        """Soft-delete: marca como oculta, sem remover do banco."""
+        if not ObjectId.is_valid(id):
+            return False
+        result = await self._collection.update_one(
+            {"_id": ObjectId(id)},
+            {"$set": {"hidden": True}},
+        )
+        return result.matched_count > 0

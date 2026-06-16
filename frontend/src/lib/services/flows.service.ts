@@ -20,4 +20,8 @@ export class FlowsService {
     if (!dto.isValid()) throw new Error('Dados do fluxo inválidos');
     return await this.repo.save(dto.toPayload());
   }
+
+  async duplicate(id: string, name: string) {
+    return await this.repo.duplicate(id, name);
+  }
 }

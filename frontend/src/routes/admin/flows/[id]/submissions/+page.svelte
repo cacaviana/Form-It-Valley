@@ -52,6 +52,27 @@
     expandedId = expandedId === id ? null : id;
   }
 
+  let hidingId = $state<string | null>(null);
+  let confirmTarget = $state<SubmissionSummary | null>(null);
+
+  async function hideSubmission(id: string) {
+    hidingId = id;
+    try {
+      const res = await authFetch(`/api/submissions/${id}`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        submissions = submissions.filter((s) => s.id !== id);
+        if (expandedId === id) expandedId = null;
+        confirmTarget = null;
+      } else {
+        alert('Nao foi possivel excluir a resposta.');
+      }
+    } catch (e) {
+      alert('Erro ao excluir a resposta.');
+    } finally {
+      hidingId = null;
+    }
+  }
+
   function formatDate(iso: string): string {
     try {
       const d = new Date(iso);
@@ -82,12 +103,6 @@
 <div class="min-h-screen bg-gray-50">
   <header class="bg-white border-b px-6 py-4 flex justify-between items-center">
     <div class="flex items-center gap-3">
-      <button onclick={() => goto('/admin/flows')} class="text-gray-400 hover:text-gray-700 cursor-pointer transition-colors p-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-      </button>
-      <div class="h-5 w-px bg-gray-200"></div>
       <div>
         <h1 class="text-xl font-bold text-gray-900">Respostas</h1>
         <p class="text-sm text-gray-500">
@@ -117,8 +132,11 @@
         {#each submissions as sub}
           <div class="bg-white rounded-lg border overflow-hidden">
             <!-- Header do card -->
-            <button
+            <div
               onclick={() => toggleExpand(sub.id)}
+              onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(sub.id); } }}
+              role="button"
+              tabindex="0"
               class="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <div class="flex items-center gap-4 min-w-0">
@@ -137,12 +155,19 @@
                 <span class="text-xs px-2 py-0.5 rounded-full {statusColors[sub.status] || 'bg-gray-100 text-gray-600'}">
                   {sub.status}
                 </span>
-                <span class="text-xs text-gray-400">{formatDate(sub.created_at)}</span>
+                <button
+                  onclick={(e) => { e.stopPropagation(); confirmTarget = sub; }}
+                  title="Excluir resposta"
+                  aria-label="Excluir resposta"
+                  class="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded p-1 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                </button>
                 <svg class="w-4 h-4 text-gray-400 transition-transform {expandedId === sub.id ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
               </div>
-            </button>
+            </div>
 
             <!-- Respostas expandidas -->
             {#if expandedId === sub.id}
@@ -186,3 +211,45 @@
     {/if}
   </main>
 </div>
+
+<!-- Modal de confirmacao de exclusao -->
+{#if confirmTarget}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    onclick={() => { if (!hidingId) confirmTarget = null; }}
+    role="presentation"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden"
+      onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="px-6 pt-6 pb-4 text-center">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Excluir resposta</h3>
+        <p class="text-sm text-gray-500 mt-1">
+          Deseja realmente excluir a resposta de <span class="font-medium text-gray-700">{confirmTarget.client_name}</span>?
+        </p>
+      </div>
+      <div class="px-6 pb-6 flex gap-3">
+        <button
+          onclick={() => { if (!hidingId) confirmTarget = null; }}
+          disabled={!!hidingId}
+          class="flex-1 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg px-4 py-2.5 cursor-pointer transition-colors disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+        <button
+          onclick={() => confirmTarget && hideSubmission(confirmTarget.id)}
+          disabled={!!hidingId}
+          class="flex-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2.5 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {hidingId ? 'Excluindo...' : 'Excluir'}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

@@ -21,6 +21,16 @@ export class FlowsRepository {
     return res.json();
   }
 
+  async duplicate(id: string, name: string): Promise<Flow> {
+    const res = await authFetch(`/api/flows/${id}/duplicate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error('Erro ao duplicar fluxo');
+    return res.json();
+  }
+
   async save(payload: Record<string, unknown>): Promise<Flow> {
     const method = payload._id ? 'PUT' : 'POST';
     const url = payload._id ? `/api/flows/${payload._id}` : '/api/flows';

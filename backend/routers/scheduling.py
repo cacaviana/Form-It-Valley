@@ -19,10 +19,13 @@ _activecampaign = ActiveCampaignService()
 
 
 @router.get("")
-async def list_schedulings():
-    """Lista todos os agendamentos (admin)."""
+async def list_schedulings(month: Optional[int] = None, year: Optional[int] = None):
+    """Lista agendamentos (admin). Se month/year informados, filtra por scheduled_date do mes."""
     db = mongodb_client.database
-    docs = await db["scheduling"].find().sort("created_at", -1).to_list(200)
+    query: dict = {}
+    if month and year:
+        query["scheduled_date"] = {"$regex": f"^{year:04d}-{month:02d}"}
+    docs = await db["scheduling"].find(query).sort("created_at", -1).to_list(1000)
     return [_serialize(doc) for doc in docs]
 
 

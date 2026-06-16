@@ -22,8 +22,11 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		return json(await res.json(), { status: res.status });
 	}
 
-	// Admin: list all schedulings
-	const res = await fetch(backendUrl('/api/scheduling'), {
+	// Admin: list schedulings (opcionalmente filtrado por mes/ano)
+	const month = url.searchParams.get('month');
+	const year = url.searchParams.get('year');
+	const monthParam = month && year ? `?month=${month}&year=${year}` : '';
+	const res = await fetch(backendUrl(`/api/scheduling${monthParam}`), {
 		headers: authHeaders(request)
 	});
 	return json(await res.json(), { status: res.status });
