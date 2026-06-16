@@ -6,7 +6,7 @@
 
 export type Lang = 'fr' | 'pt' | 'en' | 'es';
 
-let currentLang: Lang = (typeof localStorage !== 'undefined' && localStorage.getItem('fq_lang') as Lang) || 'fr';
+let currentLang: Lang = (typeof localStorage !== 'undefined' && localStorage.getItem('fq_lang') as Lang) || 'pt';
 
 export function getLang(): Lang { return currentLang; }
 
@@ -281,4 +281,24 @@ export const translations: Record<string, Record<Lang, string>> = {
   forwardSpecialistHint: { fr: 'Le client sera informé qu\'un spécialiste le contactera. Les données seront enregistrées comme lead.', pt: 'O cliente será informado que um especialista entrará em contato. Os dados serão salvos como lead.', en: 'The client will be informed a specialist will contact them. Data will be saved as a lead.', es: 'El cliente será informado de que un especialista le contactará. Los datos se guardarán como lead.' },
   messageText: { fr: 'Texte du message', pt: 'Texto da mensagem', en: 'Message text', es: 'Texto del mensaje' },
   messageTextPlaceholder: { fr: 'Texte que le client verra...', pt: 'Texto que o cliente verá...', en: 'Text the client will see...', es: 'Texto que el cliente verá...' },
+
+  // Hints de tipo de pergunta
+  singleChoiceHint: { fr: 'Le client choisit 1 option (chaque option devient une sortie du flux)', pt: 'O cliente escolhe 1 opção (cada opção vira uma saída do fluxo)', en: 'The client picks 1 option (each option becomes a flow output)', es: 'El cliente elige 1 opción (cada opción se vuelve una salida del flujo)' },
+  yesNoHint: { fr: '2 sorties : Oui ou Non — idéal pour les bifurcations', pt: '2 saídas: Sim ou Não — ideal para bifurcações', en: '2 outputs: Yes or No — ideal for branching', es: '2 salidas: Sí o No — ideal para bifurcaciones' },
+  numberHint: { fr: 'Champ numérique — liez à un produit du CSV pour calculer quantité x prix', pt: 'Campo numérico — vincule a um produto do CSV para calcular quantidade × preço', en: 'Numeric field — link to a CSV product to compute quantity × price', es: 'Campo numérico — vincule a un producto del CSV para calcular cantidad × precio' },
+  textHint: { fr: 'Champ ouvert pour observations (ne devient jamais un article du devis)', pt: 'Campo aberto para observações (nunca vira item do orçamento)', en: 'Open field for observations (never becomes a quote item)', es: 'Campo abierto para observaciones (nunca se vuelve ítem del presupuesto)' },
+  multipleChoiceHint: { fr: 'Le client peut sélectionner plusieurs options', pt: 'O cliente pode selecionar várias opções', en: 'The client can select multiple options', es: 'El cliente puede seleccionar varias opciones' },
+  dateTypeHint: { fr: 'Sélecteur de date — ne devient jamais un article du devis', pt: 'Seletor de data — nunca vira item do orçamento', en: 'Date picker — never becomes a quote item', es: 'Selector de fecha — nunca se vuelve ítem del presupuesto' },
+  dropdownHint: { fr: 'Sélecteur dropdown pour les longues listes', pt: 'Lista suspensa para listas longas', en: 'Dropdown selector for long lists', es: 'Lista desplegable para listas largas' },
+  photoSelectorHint: { fr: 'Le client envoie une photo — ne devient jamais un article du devis', pt: 'O cliente envia uma foto — nunca vira item do orçamento', en: 'The client uploads a photo — never becomes a quote item', es: 'El cliente envía una foto — nunca se vuelve ítem del presupuesto' },
+
+  // Mais labels do builder
+  optionWithoutLink: { fr: 'option sans', pt: 'opção sem', en: 'option without', es: 'opción sin' },
+  optionsWithoutLink: { fr: 'option(s) sans', pt: 'opção(ões) sem', en: 'option(s) without', es: 'opción(es) sin' },
+  blacklistManage: { fr: 'Gérer la liste noire', pt: 'Gerenciar lista negra', en: 'Manage blacklist', es: 'Gestionar lista negra' },
+  editTexts: { fr: 'Éditer les textes', pt: 'Editar textos', en: 'Edit texts', es: 'Editar textos' },
+  editEmail: { fr: 'Éditer e-mail', pt: 'Editar e-mail', en: 'Edit email', es: 'Editar e-mail' },
+  customizeEmail: { fr: 'Personnaliser e-mail', pt: 'Personalizar e-mail', en: 'Customize email', es: 'Personalizar e-mail' },
+  editSchedule: { fr: 'Éditer horaires', pt: 'Editar horários', en: 'Edit schedule', es: 'Editar horarios' },
+  customizeSchedule: { fr: 'Personnaliser horaires', pt: 'Personalizar horários', en: 'Customize schedule', es: 'Personalizar horarios' },
 };
