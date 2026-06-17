@@ -41,8 +41,8 @@
   let calYear = $state(new Date().getFullYear());
   let selectedDay = $state<string | null>(null);
 
-  const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   function toggleDay(date: string) {
     selectedDay = selectedDay === date ? null : date;
@@ -148,7 +148,7 @@
   const bookingStatusLabels: Record<string, string> = {
     confirmed: 'Confirmado',
     cancelled: 'Cancelado',
-    completed: 'Concluido'
+    completed: 'Concluído'
   };
 </script>
 
@@ -215,7 +215,7 @@
             {/each}
 
             <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-400">
-              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-200"></span> Disponivel</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-200"></span> Disponível</span>
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-gray-200"></span> Indisponível</span>
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded ring-1 ring-blue-300"></span> Com agendamento</span>
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-blue-600"></span> Selecionado</span>
@@ -271,7 +271,7 @@
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Lead</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Data / Hora</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Notificacoes</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Notificações</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Respostas</th>
                   </tr>
                 </thead>

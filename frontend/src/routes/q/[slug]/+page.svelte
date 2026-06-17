@@ -100,60 +100,60 @@
   const brDDDs: { ddd: string; label: string }[] = [
     // Sudeste
     { ddd: '11', label: '11 - SP Capital' },
-    { ddd: '12', label: '12 - SP Vale do Paraiba' },
+    { ddd: '12', label: '12 - SP Vale do Paraíba' },
     { ddd: '13', label: '13 - SP Litoral' },
     { ddd: '14', label: '14 - SP Bauru' },
     { ddd: '15', label: '15 - SP Sorocaba' },
-    { ddd: '16', label: '16 - SP Ribeirao Preto' },
+    { ddd: '16', label: '16 - SP Ribeirão Preto' },
     { ddd: '17', label: '17 - SP S. J. Rio Preto' },
     { ddd: '18', label: '18 - SP Pres. Prudente' },
     { ddd: '19', label: '19 - SP Campinas' },
     { ddd: '21', label: '21 - RJ Capital' },
     { ddd: '22', label: '22 - RJ Interior' },
     { ddd: '24', label: '24 - RJ Volta Redonda' },
-    { ddd: '27', label: '27 - ES Vitoria' },
+    { ddd: '27', label: '27 - ES Vitória' },
     { ddd: '28', label: '28 - ES Sul' },
     { ddd: '31', label: '31 - MG BH' },
     { ddd: '32', label: '32 - MG Juiz de Fora' },
     { ddd: '33', label: '33 - MG Gov. Valadares' },
-    { ddd: '34', label: '34 - MG Uberlandia' },
-    { ddd: '35', label: '35 - MG Pocos de Caldas' },
-    { ddd: '37', label: '37 - MG Divinopolis' },
+    { ddd: '34', label: '34 - MG Uberlândia' },
+    { ddd: '35', label: '35 - MG Poços de Caldas' },
+    { ddd: '37', label: '37 - MG Divinópolis' },
     { ddd: '38', label: '38 - MG Montes Claros' },
     // Sul
     { ddd: '41', label: '41 - PR Curitiba' },
     { ddd: '42', label: '42 - PR Ponta Grossa' },
     { ddd: '43', label: '43 - PR Londrina' },
-    { ddd: '44', label: '44 - PR Maringa' },
-    { ddd: '45', label: '45 - PR Foz do Iguacu' },
+    { ddd: '44', label: '44 - PR Maringá' },
+    { ddd: '45', label: '45 - PR Foz do Iguaçu' },
     { ddd: '46', label: '46 - PR Pato Branco' },
     { ddd: '47', label: '47 - SC Joinville' },
-    { ddd: '48', label: '48 - SC Florianopolis' },
-    { ddd: '49', label: '49 - SC Chapeco' },
+    { ddd: '48', label: '48 - SC Florianópolis' },
+    { ddd: '49', label: '49 - SC Chapecó' },
     { ddd: '51', label: '51 - RS Porto Alegre' },
     { ddd: '53', label: '53 - RS Pelotas' },
     { ddd: '54', label: '54 - RS Caxias do Sul' },
     { ddd: '55', label: '55 - RS Santa Maria' },
     // Centro-Oeste
-    { ddd: '61', label: '61 - DF Brasilia' },
-    { ddd: '62', label: '62 - GO Goiania' },
+    { ddd: '61', label: '61 - DF Brasília' },
+    { ddd: '62', label: '62 - GO Goiânia' },
     { ddd: '63', label: '63 - TO Palmas' },
     { ddd: '64', label: '64 - GO Rio Verde' },
-    { ddd: '65', label: '65 - MT Cuiaba' },
-    { ddd: '66', label: '66 - MT Rondonopolis' },
+    { ddd: '65', label: '65 - MT Cuiabá' },
+    { ddd: '66', label: '66 - MT Rondonópolis' },
     { ddd: '67', label: '67 - MS Campo Grande' },
     { ddd: '68', label: '68 - AC Rio Branco' },
     { ddd: '69', label: '69 - RO Porto Velho' },
     // Nordeste
     { ddd: '71', label: '71 - BA Salvador' },
-    { ddd: '73', label: '73 - BA Ilheus' },
+    { ddd: '73', label: '73 - BA Ilhéus' },
     { ddd: '74', label: '74 - BA Juazeiro' },
     { ddd: '75', label: '75 - BA Feira de Santana' },
     { ddd: '77', label: '77 - BA Vit. da Conquista' },
     { ddd: '79', label: '79 - SE Aracaju' },
     { ddd: '81', label: '81 - PE Recife' },
-    { ddd: '82', label: '82 - AL Maceio' },
-    { ddd: '83', label: '83 - PB Joao Pessoa' },
+    { ddd: '82', label: '82 - AL Maceió' },
+    { ddd: '83', label: '83 - PB João Pessoa' },
     { ddd: '84', label: '84 - RN Natal' },
     { ddd: '85', label: '85 - CE Fortaleza' },
     { ddd: '86', label: '86 - PI Teresina' },
@@ -161,14 +161,14 @@
     { ddd: '88', label: '88 - CE Juazeiro do Norte' },
     { ddd: '89', label: '89 - PI Picos' },
     // Norte
-    { ddd: '91', label: '91 - PA Belem' },
+    { ddd: '91', label: '91 - PA Belém' },
     { ddd: '92', label: '92 - AM Manaus' },
-    { ddd: '93', label: '93 - PA Santarem' },
-    { ddd: '94', label: '94 - PA Maraba' },
+    { ddd: '93', label: '93 - PA Santarém' },
+    { ddd: '94', label: '94 - PA Marabá' },
     { ddd: '95', label: '95 - RR Boa Vista' },
-    { ddd: '96', label: '96 - AP Macapa' },
+    { ddd: '96', label: '96 - AP Macapá' },
     { ddd: '97', label: '97 - AM Interior' },
-    { ddd: '98', label: '98 - MA Sao Luis' },
+    { ddd: '98', label: '98 - MA São Luís' },
     { ddd: '99', label: '99 - MA Imperatriz' },
   ];
 
@@ -537,8 +537,8 @@
     return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
-  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-  const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   let calDaysInMonth = $derived(new Date(calYear, calMonth + 1, 0).getDate());
   let calFirstDay = $derived(new Date(calYear, calMonth, 1).getDay());
