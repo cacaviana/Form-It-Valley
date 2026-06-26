@@ -100,60 +100,60 @@
   const brDDDs: { ddd: string; label: string }[] = [
     // Sudeste
     { ddd: '11', label: '11 - SP Capital' },
-    { ddd: '12', label: '12 - SP Vale do Paraiba' },
+    { ddd: '12', label: '12 - SP Vale do Paraíba' },
     { ddd: '13', label: '13 - SP Litoral' },
     { ddd: '14', label: '14 - SP Bauru' },
     { ddd: '15', label: '15 - SP Sorocaba' },
-    { ddd: '16', label: '16 - SP Ribeirao Preto' },
+    { ddd: '16', label: '16 - SP Ribeirão Preto' },
     { ddd: '17', label: '17 - SP S. J. Rio Preto' },
     { ddd: '18', label: '18 - SP Pres. Prudente' },
     { ddd: '19', label: '19 - SP Campinas' },
     { ddd: '21', label: '21 - RJ Capital' },
     { ddd: '22', label: '22 - RJ Interior' },
     { ddd: '24', label: '24 - RJ Volta Redonda' },
-    { ddd: '27', label: '27 - ES Vitoria' },
+    { ddd: '27', label: '27 - ES Vitória' },
     { ddd: '28', label: '28 - ES Sul' },
     { ddd: '31', label: '31 - MG BH' },
     { ddd: '32', label: '32 - MG Juiz de Fora' },
     { ddd: '33', label: '33 - MG Gov. Valadares' },
-    { ddd: '34', label: '34 - MG Uberlandia' },
-    { ddd: '35', label: '35 - MG Pocos de Caldas' },
-    { ddd: '37', label: '37 - MG Divinopolis' },
+    { ddd: '34', label: '34 - MG Uberlândia' },
+    { ddd: '35', label: '35 - MG Poços de Caldas' },
+    { ddd: '37', label: '37 - MG Divinópolis' },
     { ddd: '38', label: '38 - MG Montes Claros' },
     // Sul
     { ddd: '41', label: '41 - PR Curitiba' },
     { ddd: '42', label: '42 - PR Ponta Grossa' },
     { ddd: '43', label: '43 - PR Londrina' },
-    { ddd: '44', label: '44 - PR Maringa' },
-    { ddd: '45', label: '45 - PR Foz do Iguacu' },
+    { ddd: '44', label: '44 - PR Maringá' },
+    { ddd: '45', label: '45 - PR Foz do Iguaçu' },
     { ddd: '46', label: '46 - PR Pato Branco' },
     { ddd: '47', label: '47 - SC Joinville' },
-    { ddd: '48', label: '48 - SC Florianopolis' },
-    { ddd: '49', label: '49 - SC Chapeco' },
+    { ddd: '48', label: '48 - SC Florianópolis' },
+    { ddd: '49', label: '49 - SC Chapecó' },
     { ddd: '51', label: '51 - RS Porto Alegre' },
     { ddd: '53', label: '53 - RS Pelotas' },
     { ddd: '54', label: '54 - RS Caxias do Sul' },
     { ddd: '55', label: '55 - RS Santa Maria' },
     // Centro-Oeste
-    { ddd: '61', label: '61 - DF Brasilia' },
-    { ddd: '62', label: '62 - GO Goiania' },
+    { ddd: '61', label: '61 - DF Brasília' },
+    { ddd: '62', label: '62 - GO Goiânia' },
     { ddd: '63', label: '63 - TO Palmas' },
     { ddd: '64', label: '64 - GO Rio Verde' },
-    { ddd: '65', label: '65 - MT Cuiaba' },
-    { ddd: '66', label: '66 - MT Rondonopolis' },
+    { ddd: '65', label: '65 - MT Cuiabá' },
+    { ddd: '66', label: '66 - MT Rondonópolis' },
     { ddd: '67', label: '67 - MS Campo Grande' },
     { ddd: '68', label: '68 - AC Rio Branco' },
     { ddd: '69', label: '69 - RO Porto Velho' },
     // Nordeste
     { ddd: '71', label: '71 - BA Salvador' },
-    { ddd: '73', label: '73 - BA Ilheus' },
+    { ddd: '73', label: '73 - BA Ilhéus' },
     { ddd: '74', label: '74 - BA Juazeiro' },
     { ddd: '75', label: '75 - BA Feira de Santana' },
     { ddd: '77', label: '77 - BA Vit. da Conquista' },
     { ddd: '79', label: '79 - SE Aracaju' },
     { ddd: '81', label: '81 - PE Recife' },
-    { ddd: '82', label: '82 - AL Maceio' },
-    { ddd: '83', label: '83 - PB Joao Pessoa' },
+    { ddd: '82', label: '82 - AL Maceió' },
+    { ddd: '83', label: '83 - PB João Pessoa' },
     { ddd: '84', label: '84 - RN Natal' },
     { ddd: '85', label: '85 - CE Fortaleza' },
     { ddd: '86', label: '86 - PI Teresina' },
@@ -161,14 +161,14 @@
     { ddd: '88', label: '88 - CE Juazeiro do Norte' },
     { ddd: '89', label: '89 - PI Picos' },
     // Norte
-    { ddd: '91', label: '91 - PA Belem' },
+    { ddd: '91', label: '91 - PA Belém' },
     { ddd: '92', label: '92 - AM Manaus' },
-    { ddd: '93', label: '93 - PA Santarem' },
-    { ddd: '94', label: '94 - PA Maraba' },
+    { ddd: '93', label: '93 - PA Santarém' },
+    { ddd: '94', label: '94 - PA Marabá' },
     { ddd: '95', label: '95 - RR Boa Vista' },
-    { ddd: '96', label: '96 - AP Macapa' },
+    { ddd: '96', label: '96 - AP Macapá' },
     { ddd: '97', label: '97 - AM Interior' },
-    { ddd: '98', label: '98 - MA Sao Luis' },
+    { ddd: '98', label: '98 - MA São Luís' },
     { ddd: '99', label: '99 - MA Imperatriz' },
   ];
 
@@ -204,6 +204,14 @@
   let schedulingResult = $state<{ message: string; gcal_event_link?: string; whatsapp_sent?: boolean; email_sent?: boolean } | null>(null);
 
   let resultText = $state('');
+
+  // Estado adicional para tipos de pergunta com widgets dedicados
+  let multipleSelectedIds = $state<string[]>([]);
+  let dateAnswer = $state('');
+  let dropdownValue = $state('');
+  let photoFileName = $state('');
+  let photoDataUrl = $state('');
+  let messageTimeout: ReturnType<typeof setTimeout> | null = $state(null);
 
   let currentNode = $derived(flow?.nodes.find(n => n.id === currentNodeId) || null);
   let totalQuestions = $derived(flow?.nodes.filter(n => n.type === 'question').length || 0);
@@ -300,13 +308,8 @@
         processCurrentNode();
       }
     } else if (currentNode.type === 'message') {
-      setTimeout(() => {
-        const edge = flow!.edges.find(e => e.source === currentNodeId);
-        if (edge) {
-          currentNodeId = edge.target;
-          processCurrentNode();
-        }
-      }, 2500);
+      if (messageTimeout) clearTimeout(messageTimeout);
+      messageTimeout = setTimeout(advanceFromMessage, 8000);
     } else if (currentNode.type === 'end') {
       endNode = currentNode;
       submitToBackend();
@@ -382,6 +385,66 @@
       currentNodeId = nextEdge.target;
       processCurrentNode();
     }
+  }
+
+  function advanceFromMessage() {
+    if (messageTimeout) { clearTimeout(messageTimeout); messageTimeout = null; }
+    const edge = flow!.edges.find(e => e.source === currentNodeId);
+    if (edge) {
+      currentNodeId = edge.target;
+      processCurrentNode();
+    }
+  }
+
+  function toggleMultiple(optId: string) {
+    if (multipleSelectedIds.includes(optId)) {
+      multipleSelectedIds = multipleSelectedIds.filter(id => id !== optId);
+    } else {
+      multipleSelectedIds = [...multipleSelectedIds, optId];
+    }
+  }
+
+  function submitMultipleChoice() {
+    if (!currentNode?.data.options || multipleSelectedIds.length === 0) return;
+    const opts = currentNode.data.options.filter(o => multipleSelectedIds.includes(o.id));
+    const value = opts.map(o => o.value).join(',');
+    const label = opts.map(o => o.label).join(', ');
+    const firstHandle = opts[0]?.id;
+    multipleSelectedIds = [];
+    selectAnswer(value, firstHandle, label);
+  }
+
+  function submitDropdown() {
+    if (!dropdownValue || !currentNode?.data.options) return;
+    const opt = currentNode.data.options.find(o => o.value === dropdownValue);
+    const v = dropdownValue;
+    dropdownValue = '';
+    selectAnswer(v, opt?.id, opt?.label);
+  }
+
+  function submitDate() {
+    if (!dateAnswer) return;
+    const v = dateAnswer;
+    dateAnswer = '';
+    selectAnswer(v);
+  }
+
+  function handlePhotoSelected(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    photoFileName = file.name;
+    const reader = new FileReader();
+    reader.onload = () => { photoDataUrl = String(reader.result || ''); };
+    reader.readAsDataURL(file);
+  }
+
+  function submitPhoto() {
+    if (!photoFileName) return;
+    const name = photoFileName;
+    photoFileName = '';
+    photoDataUrl = '';
+    selectAnswer(name, undefined, name);
   }
 
   function goBack() {
@@ -474,8 +537,8 @@
     return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
-  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-  const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   let calDaysInMonth = $derived(new Date(calYear, calMonth + 1, 0).getDate());
   let calFirstDay = $derived(new Date(calYear, calMonth, 1).getDay());
@@ -720,13 +783,20 @@
       <div class="p-5 sm:p-8">
         {#if currentNode.type === 'message'}
           <div class="text-center py-6">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: color-mix(in srgb, var(--tc) 15%, transparent); mx-auto mb-4">
-              <svg class="w-6 h-6 transition-colors" style="color: var(--tc);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style="background: color-mix(in srgb, {theme.main} 15%, transparent);">
+              <svg class="w-6 h-6 transition-colors" style="color: {theme.main};" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <h3 class="text-xl font-semibold text-gray-800 mb-3">{currentNode.data.title}</h3>
-            <p class="text-base text-gray-500">{currentNode.data.message}</p>
+            <p class="text-base text-gray-600 whitespace-pre-line mb-6">{currentNode.data.message}</p>
+            <button
+              onclick={advanceFromMessage}
+              class="px-8 py-3 rounded-xl text-base font-medium text-white cursor-pointer transition-colors"
+              style="background: {theme.gradient};"
+            >
+              {uiT.questions_button_next}
+            </button>
           </div>
         {:else}
           <h3 class="text-xl font-semibold text-gray-800 mb-2">{currentNode.data.title}</h3>
@@ -775,6 +845,94 @@
                 onclick={() => { selectAnswer(inputValue); inputValue = ''; }}
                 disabled={!inputValue}
                 class="w-full sm:w-auto px-6 py-3 rounded-xl text-base font-medium text-white disabled:opacity-40 cursor-pointer transition-colors"
+                style="background: {theme.gradient};"
+              >
+                {uiT.questions_button_next}
+              </button>
+            </div>
+          {:else if currentNode.data.questionType === 'multiple_choice' && currentNode.data.options}
+            <div class="space-y-2.5 mb-4">
+              {#each currentNode.data.options as opt}
+                {@const isSel = multipleSelectedIds.includes(opt.id)}
+                <button
+                  type="button"
+                  onclick={() => toggleMultiple(opt.id)}
+                  class="w-full border-2 rounded-xl px-4 py-3.5 text-left text-base font-medium flex items-center gap-3 transition-all cursor-pointer hover:bg-violet-50"
+                  style="border-color: {isSel ? theme.main : '#e5e7eb'}; background: {isSel ? 'color-mix(in srgb, ' + theme.main + ' 8%, transparent)' : 'transparent'};"
+                >
+                  <span class="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0" style="border-color: {isSel ? theme.main : '#d1d5db'}; background: {isSel ? theme.main : 'transparent'};">
+                    {#if isSel}
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    {/if}
+                  </span>
+                  <span class="text-gray-700">{opt.label}</span>
+                </button>
+              {/each}
+            </div>
+            <button
+              onclick={submitMultipleChoice}
+              disabled={multipleSelectedIds.length === 0}
+              class="w-full px-6 py-3 rounded-xl text-base font-medium text-white disabled:opacity-40 cursor-pointer transition-colors"
+              style="background: {theme.gradient};"
+            >
+              {uiT.questions_button_next}
+            </button>
+          {:else if currentNode.data.questionType === 'date'}
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                type="date"
+                bind:value={dateAnswer}
+                class="flex-1 bg-gray-50/70 border border-gray-200/90 rounded-xl px-4 py-3 text-base text-gray-800 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none"
+              />
+              <button
+                onclick={submitDate}
+                disabled={!dateAnswer}
+                class="w-full sm:w-auto px-6 py-3 rounded-xl text-base font-medium text-white disabled:opacity-40 cursor-pointer transition-colors"
+                style="background: {theme.gradient};"
+              >
+                {uiT.questions_button_next}
+              </button>
+            </div>
+          {:else if currentNode.data.questionType === 'dropdown' && currentNode.data.options}
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select
+                bind:value={dropdownValue}
+                class="flex-1 bg-gray-50/70 border border-gray-200/90 rounded-xl px-4 py-3 text-base text-gray-800 focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 outline-none cursor-pointer"
+              >
+                <option value="" disabled>{currentNode.data.dropdownPlaceholder || 'Selecione uma opção'}</option>
+                {#each currentNode.data.options as opt}
+                  <option value={opt.value}>{opt.label}</option>
+                {/each}
+              </select>
+              <button
+                onclick={submitDropdown}
+                disabled={!dropdownValue}
+                class="w-full sm:w-auto px-6 py-3 rounded-xl text-base font-medium text-white disabled:opacity-40 cursor-pointer transition-colors"
+                style="background: {theme.gradient};"
+              >
+                {uiT.questions_button_next}
+              </button>
+            </div>
+          {:else if currentNode.data.questionType === 'photo'}
+            <div class="space-y-3">
+              <label class="block border-2 border-dashed border-gray-300 rounded-xl px-4 py-8 text-center cursor-pointer hover:bg-violet-50/50 transition-colors">
+                <input type="file" accept="image/*" onchange={handlePhotoSelected} class="hidden" />
+                {#if photoDataUrl}
+                  <img src={photoDataUrl} alt="Preview" class="max-h-40 mx-auto rounded-lg mb-2" />
+                  <p class="text-sm text-gray-700 font-medium">{photoFileName}</p>
+                  <p class="text-xs text-gray-400 mt-1">Clique para trocar</p>
+                {:else}
+                  <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  <p class="text-sm text-gray-600 font-medium">Clique para enviar uma foto</p>
+                  <p class="text-xs text-gray-400 mt-1">JPG, PNG ou WEBP</p>
+                {/if}
+              </label>
+              <button
+                onclick={submitPhoto}
+                disabled={!photoFileName}
+                class="w-full px-6 py-3 rounded-xl text-base font-medium text-white disabled:opacity-40 cursor-pointer transition-colors"
                 style="background: {theme.gradient};"
               >
                 {uiT.questions_button_next}

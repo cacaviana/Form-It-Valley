@@ -39,9 +39,18 @@
 
   let calMonth = $state(new Date().getMonth());
   let calYear = $state(new Date().getFullYear());
+  let selectedDay = $state<string | null>(null);
 
-  const monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  function toggleDay(date: string) {
+    selectedDay = selectedDay === date ? null : date;
+  }
+
+  function clearDayFilter() {
+    selectedDay = null;
+  }
 
   onMount(async () => {
     await Promise.all([loadSchedulings(), loadDates()]);
@@ -65,12 +74,14 @@
   async function prevMonth() {
     if (calMonth === 0) { calMonth = 11; calYear--; }
     else calMonth--;
+    selectedDay = null;
     await Promise.all([loadDates(), loadSchedulings()]);
   }
 
   async function nextMonth() {
     if (calMonth === 11) { calMonth = 0; calYear++; }
     else calMonth++;
+    selectedDay = null;
     await Promise.all([loadDates(), loadSchedulings()]);
   }
 
@@ -117,6 +128,18 @@
     return y === calYear && m === calMonth + 1 && s.scheduled_date >= today;
   }).length);
 
+  // Lista visivel na tabela — filtra por dia se selectedDay estiver setado
+  let schedulingsFiltrados = $derived(
+    selectedDay
+      ? schedulingsDoMes.filter(s => s.scheduled_date === selectedDay)
+      : schedulingsDoMes
+  );
+
+  function formatDayLabel(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  }
+
   const bookingStatusColors: Record<string, string> = {
     confirmed: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
@@ -125,7 +148,7 @@
   const bookingStatusLabels: Record<string, string> = {
     confirmed: 'Confirmado',
     cancelled: 'Cancelado',
-    completed: 'Concluido'
+    completed: 'Concluído'
   };
 </script>
 
@@ -168,15 +191,22 @@
                 {#each week as cell}
                   {#if cell}
                     {@const dayNum = parseInt(cell.date.split('-')[2])}
-                    <div class="aspect-square flex items-center justify-center text-xs rounded-lg m-0.5
-                      {cell.available ? 'bg-green-50 text-green-800 font-medium' : 'text-gray-300'}"
-                      title={cell.available ? `${cell.slots_count} horários livres` : 'Indisponível'}
+                    {@const hasBookings = schedulingsDoMes.some(s => s.scheduled_date === cell.date)}
+                    {@const isSelected = selectedDay === cell.date}
+                    <button
+                      type="button"
+                      onclick={() => toggleDay(cell.date)}
+                      class="aspect-square flex items-center justify-center text-xs rounded-lg m-0.5 transition-all cursor-pointer
+                        {cell.available ? 'bg-green-50 text-green-800 font-medium hover:bg-green-100' : 'text-gray-300 hover:bg-gray-50'}
+                        {hasBookings ? 'ring-1 ring-blue-300' : ''}
+                        {isSelected ? '!bg-blue-600 !text-white !ring-2 !ring-blue-700 font-bold' : ''}"
+                      title={cell.available ? `${cell.slots_count} horários livres${hasBookings ? ' · clique para filtrar agendamentos' : ''}` : (hasBookings ? 'Clique para filtrar agendamentos' : 'Indisponível')}
                     >
                       {dayNum}
-                      {#if cell.available && cell.slots_count > 0}
+                      {#if cell.available && cell.slots_count > 0 && !isSelected}
                         <span class="text-[8px] text-green-500 ml-0.5">{cell.slots_count}</span>
                       {/if}
-                    </div>
+                    </button>
                   {:else}
                     <div class="aspect-square"></div>
                   {/if}
@@ -184,9 +214,11 @@
               </div>
             {/each}
 
-            <div class="mt-3 flex items-center gap-3 text-[10px] text-gray-400">
-              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-200"></span> Disponivel</span>
+            <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-400">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-200"></span> Disponível</span>
               <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-gray-200"></span> Indisponível</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded ring-1 ring-blue-300"></span> Com agendamento</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-blue-600"></span> Selecionado</span>
             </div>
           </div>
 
@@ -207,12 +239,29 @@
 
         <!-- Lista de agendamentos -->
         <div class="lg:col-span-2">
-          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Agendamentos realizados</h2>
+          <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Agendamentos realizados</h2>
+            {#if selectedDay}
+              <div class="flex items-center gap-2">
+                <span class="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium capitalize">
+                  Filtrando: {formatDayLabel(selectedDay)}
+                </span>
+                <button onclick={clearDayFilter} class="text-xs text-gray-500 hover:text-gray-800 cursor-pointer underline">
+                  Limpar filtro
+                </button>
+              </div>
+            {/if}
+          </div>
 
           {#if schedulingsDoMes.length === 0}
             <div class="bg-white rounded-xl border p-8 text-center">
               <p class="text-gray-500 text-sm">Nenhum agendamento realizado ainda.</p>
               <p class="text-xs text-gray-400 mt-1">Os agendamentos aparecerão aqui quando leads preencherem os formulários.</p>
+            </div>
+          {:else if schedulingsFiltrados.length === 0}
+            <div class="bg-white rounded-xl border p-8 text-center">
+              <p class="text-gray-500 text-sm">Nenhum agendamento neste dia.</p>
+              <button onclick={clearDayFilter} class="text-xs text-blue-600 hover:underline mt-2 cursor-pointer">Ver todos do mês</button>
             </div>
           {:else}
             <div class="bg-white rounded-xl border overflow-hidden">
@@ -222,12 +271,12 @@
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Lead</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Data / Hora</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Notificacoes</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Notificações</th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Respostas</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
-                  {#each schedulingsDoMes as s}
+                  {#each schedulingsFiltrados as s}
                     <tr class="hover:bg-gray-50 transition-colors">
                       <td class="px-4 py-3">
                         <p class="font-medium text-gray-900 text-sm">{s.lead_name}</p>

@@ -1,20 +1,24 @@
 <script lang="ts">
   import { Handle, Position } from '@xyflow/svelte';
   import type { FlowNodeData } from '$lib/dto/flows/types';
+  import { t } from '$lib/i18n';
 
   let { data } = $props<{ data: FlowNodeData }>();
 
-  const typeLabels: Record<string, string> = {
-    single_choice: 'Choix unique',
-    yes_no: 'Oui/Non',
-    number: 'Nombre',
-    text: 'Texte',
-    multiple_choice: 'Choix multiple',
-    date: 'Date',
-    rating: 'Évaluation',
-    dropdown: 'Liste',
-    photo: 'Photo'
-  };
+  function typeLabel(qt?: string): string {
+    switch (qt) {
+      case 'single_choice': return t('singleChoice');
+      case 'yes_no': return t('yesNo');
+      case 'number': return t('number');
+      case 'text': return t('text');
+      case 'multiple_choice': return t('multipleChoice');
+      case 'date': return t('dateType');
+      case 'rating': return t('rating');
+      case 'dropdown': return t('dropdown');
+      case 'photo': return t('photo');
+      default: return qt || '';
+    }
+  }
 
   // Show individual option handles only for choice types with few options (branching)
   // For many options (like P2 brand with 7 options), show a compact summary + single output
@@ -42,7 +46,7 @@
     </div>
     <div class="min-w-0 flex-1">
       <span class="font-semibold text-blue-900 text-sm block truncate">{data.title}</span>
-      <span class="text-xs text-blue-500">{typeLabels[data.questionType || 'text']}</span>
+      <span class="text-xs text-blue-500">{typeLabel(data.questionType || 'text')}</span>
     </div>
   </div>
 
@@ -50,11 +54,11 @@
     <!-- Sim/Não — always 2 handles -->
     <div class="flex gap-2 mt-2 ml-9">
       <div class="handle-label bg-green-100 text-green-700">
-        Oui
+        {t('yes')}
         <Handle type="source" position={Position.Bottom} id="yes" class="!bg-green-500 !w-2.5 !h-2.5 !border-2 !border-white" />
       </div>
       <div class="handle-label bg-red-100 text-red-700">
-        Non
+        {t('no')}
         <Handle type="source" position={Position.Bottom} id="no" class="!bg-red-500 !w-2.5 !h-2.5 !border-2 !border-white" />
       </div>
     </div>
@@ -73,7 +77,7 @@
   {:else if showCompactOptions}
     <!-- Many options — compact summary + single handle -->
     <div class="mt-2 ml-9">
-      <div class="text-xs text-blue-400">{optionCount} options : {(data.options || []).slice(0, 3).map(o => o.label).join(', ')}...</div>
+      <div class="text-xs text-blue-400">{optionCount} {t('options').toLowerCase()} : {(data.options || []).slice(0, 3).map(o => o.label).join(', ')}...</div>
     </div>
     <Handle type="source" position={Position.Bottom} class="!bg-blue-500 !w-3 !h-3 !border-2 !border-white" />
 

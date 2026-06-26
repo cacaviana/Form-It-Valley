@@ -4,6 +4,7 @@
   import { FORM_TEXT_KEYS, SCHEDULING_TEXT_KEYS } from '$lib/dto/flows/uiTextDefaults';
   import { authFetch } from '$lib/utils/auth-fetch';
   import { page as appPage } from '$app/state';
+  import { t } from '$lib/i18n';
   import BlacklistManageModal from './BlacklistManageModal.svelte';
   import TemplateEditorModal from './TemplateEditorModal.svelte';
   import SchedulingConfigModal from './SchedulingConfigModal.svelte';
@@ -234,15 +235,15 @@
     onUpdate({ whatsappTemplate: templateName, whatsappVariables: vars });
   }
 
-  const questionTypes: { value: QuestionType; label: string; hint: string }[] = [
-    { value: 'single_choice', label: 'Choix unique', hint: 'Le client choisit 1 option (chaque option devient une sortie du flux)' },
-    { value: 'yes_no', label: 'Oui / Non', hint: '2 sorties : Oui ou Non — idéal pour les bifurcations' },
-    { value: 'number', label: 'Quantité', hint: 'Champ numérique — liez à un produit du CSV pour calculer quantité x prix' },
-    { value: 'text', label: 'Texte libre', hint: 'Champ ouvert pour observations (ne devient jamais un article du devis)' },
-    { value: 'multiple_choice', label: 'Choix multiple', hint: 'Le client peut sélectionner plusieurs options' },
-    { value: 'date', label: 'Date', hint: 'Sélecteur de date — ne devient jamais un article du devis' },
-    { value: 'dropdown', label: 'Liste déroulante', hint: 'Sélecteur dropdown pour les longues listes' },
-    { value: 'photo', label: 'Envoi de photo', hint: 'Le client envoie une photo — ne devient jamais un article du devis' }
+  const questionTypes: { value: QuestionType; labelKey: string; hintKey: string }[] = [
+    { value: 'single_choice', labelKey: 'singleChoice', hintKey: 'singleChoiceHint' },
+    { value: 'yes_no', labelKey: 'yesNo', hintKey: 'yesNoHint' },
+    { value: 'number', labelKey: 'number', hintKey: 'numberHint' },
+    { value: 'text', labelKey: 'text', hintKey: 'textHint' },
+    { value: 'multiple_choice', labelKey: 'multipleChoice', hintKey: 'multipleChoiceHint' },
+    { value: 'date', labelKey: 'dateType', hintKey: 'dateTypeHint' },
+    { value: 'dropdown', labelKey: 'dropdown', hintKey: 'dropdownHint' },
+    { value: 'photo', labelKey: 'photo', hintKey: 'photoSelectorHint' }
   ];
 
   const endTypes = [
@@ -286,10 +287,10 @@
   };
 
   const typeLabels: Record<string, string> = {
-    start: 'Début',
-    question: 'Question',
-    message: 'Message',
-    end: 'Fin',
+    start: t('startNode'),
+    question: t('questionNode'),
+    message: t('messageNode'),
+    end: t('endNode'),
     blacklist: 'Lista negra'
   };
 
@@ -342,7 +343,7 @@
   <div class="p-4 space-y-4">
     <!-- Título — all types -->
     <div>
-      <label class="label">Titre</label>
+      <label class="label">{t('title')}</label>
       <input
         type="text"
         value={data.title}
@@ -354,27 +355,27 @@
     <!-- ==================== QUESTION ==================== -->
     {#if node.type === 'question'}
       <div>
-        <label class="label">Type de question</label>
+        <label class="label">{t('questionType')}</label>
         <select
           value={data.questionType}
           onchange={(e) => onUpdate({ questionType: (e.target as HTMLSelectElement).value as QuestionType })}
           class="input"
         >
           {#each questionTypes as qt}
-            <option value={qt.value}>{qt.label}</option>
+            <option value={qt.value}>{t(qt.labelKey)}</option>
           {/each}
         </select>
-        <p class="text-xs text-gray-400 mt-1">{questionTypes.find(q => q.value === data.questionType)?.hint || ''}</p>
+        <p class="text-xs text-gray-400 mt-1">{t(questionTypes.find(q => q.value === data.questionType)?.hintKey || '')}</p>
       </div>
 
       <div>
-        <label class="label">Astuce (tooltip)</label>
+        <label class="label">{t('tooltip')}</label>
         <input
           type="text"
           value={data.tooltip || ''}
           oninput={(e) => onUpdate({ tooltip: (e.target as HTMLInputElement).value })}
           class="input"
-          placeholder="Texte d'aide pour le client"
+          placeholder={t('tooltipPlaceholder')}
         />
       </div>
 
@@ -386,18 +387,18 @@
           onchange={(e) => onUpdate({ required: (e.target as HTMLInputElement).checked })}
           class="rounded border-gray-300"
         />
-        <label for="required" class="text-sm text-gray-700">Obligatoire</label>
+        <label for="required" class="text-sm text-gray-700">{t('required')}</label>
       </div>
 
       <!-- Options for choice-based types -->
       {#if data.questionType === 'single_choice' || data.questionType === 'multiple_choice' || data.questionType === 'dropdown'}
         <div>
           <div class="flex justify-between items-center mb-2">
-            <label class="label !mb-0">Options</label>
-            <button onclick={addOption} class="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-medium">+ Ajouter</button>
+            <label class="label !mb-0">{t('options')}</label>
+            <button onclick={addOption} class="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-medium">{t('addOption')}</button>
           </div>
           {#if hasBranching}
-            <p class="text-xs text-blue-500 mb-2">Chaque option crée une sortie — connectez au nœud suivant</p>
+            <p class="text-xs text-blue-500 mb-2">{t('eachOptionCreates')}</p>
           {/if}
 
           <!-- Aviso se CSV carregado mas alguma opção sem produto vinculado -->
@@ -409,8 +410,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
                 <p class="text-xs text-amber-700">
-                  {semProduto.length === 1 ? '1 option sans' : `${semProduto.length} option(s) sans`} produit lié au CSV.
-                  L'IA peut halluciner.
+                  {semProduto.length} {t('optionsNoCsv')}
                 </p>
               </div>
             {/if}
@@ -426,7 +426,7 @@
                     value={opt.label}
                     oninput={(e) => updateOption(opt.id, 'label', (e.target as HTMLInputElement).value)}
                     class="input !py-1.5 flex-1 bg-white"
-                    placeholder="Texte de l'option"
+                    placeholder={t('optionText')}
                   />
                   <button onclick={() => removeOption(opt.id)} class="w-7 h-7 flex-shrink-0 rounded hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -454,7 +454,7 @@
                       oninput={(e) => updateOption(opt.id, 'catalogProduct', (e.target as HTMLInputElement).value)}
                       onchange={(e) => updateOption(opt.id, 'catalogProduct', (e.target as HTMLInputElement).value)}
                       class="input !py-1 text-xs flex-1 bg-white {opt.catalogProduct ? 'border-green-300 text-green-800' : 'border-amber-200 text-gray-500'}"
-                      placeholder="Lier au produit du CSV..."
+                      placeholder={t('linkToCsv')}
                     />
                     <datalist id="catalog-{opt.id}">
                       {#each catalogItems as item}
@@ -465,7 +465,7 @@
                       <button
                         onclick={() => updateOption(opt.id, 'catalogProduct', '')}
                         class="text-gray-300 hover:text-red-400 cursor-pointer flex-shrink-0"
-                        title="Retirer le lien"
+                        title={t('removeLink')}
                       >
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -479,7 +479,7 @@
           </div>
 
           {#if catalogItems.length === 0}
-            <p class="text-xs text-gray-400 mt-1.5">Chargez un CSV de prix pour lier chaque option à un produit du catalogue.</p>
+            <p class="text-xs text-gray-400 mt-1.5">{t('uploadCsvHint')}</p>
           {/if}
         </div>
       {/if}
@@ -487,7 +487,7 @@
       <!-- Rating max -->
       {#if data.questionType === 'rating'}
         <div>
-          <label class="label">Échelle maximale</label>
+          <label class="label">{t('maxScale')}</label>
           <input
             type="number"
             value={data.ratingMax || 5}
@@ -502,8 +502,8 @@
       <!-- Quantity product association (number) -->
       {#if data.questionType === 'number' && catalogItems.length > 0}
         <div>
-          <label class="label">Quantité de quel produit ?</label>
-          <p class="text-xs text-gray-400 mb-1.5">La réponse numérique sera utilisée comme quantité de ce produit dans le devis.</p>
+          <label class="label">{t('quantityProduct')}</label>
+          <p class="text-xs text-gray-400 mb-1.5">{t('quantityHint')}</p>
           <div class="flex items-center gap-1.5">
             {#if data.quantityProduct}
               <svg class="w-3 h-3 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -545,14 +545,14 @@
       <!-- Photo hint -->
       {#if data.questionType === 'photo'}
         <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
-          Le client pourra envoyer une photo du lieu/équipement. L'image sera sauvegardée avec les réponses.
+          {t('photoHint')}
         </div>
       {/if}
 
       <!-- Date hint -->
       {#if data.questionType === 'date'}
         <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
-          Le client verra un sélecteur de date. Utile pour planifier des visites ou dates préférentielles.
+          {t('dateHint')}
         </div>
       {/if}
     {/if}
@@ -567,20 +567,20 @@
           onchange={(e) => onUpdate({ isSpecialist: (e.target as HTMLInputElement).checked })}
           class="rounded border-gray-300"
         />
-        <label for="isSpecialist" class="text-sm text-gray-700">Rediriger vers un spécialiste</label>
+        <label for="isSpecialist" class="text-sm text-gray-700">{t('forwardSpecialist')}</label>
       </div>
       {#if data.isSpecialist}
         <div class="bg-red-50 rounded-lg p-3 text-xs text-red-600">
-          Le client sera informé qu'un spécialiste le contactera. Les données seront enregistrées comme lead.
+          {t('forwardSpecialistHint')}
         </div>
       {/if}
       <div>
-        <label class="label">Texte du message</label>
+        <label class="label">{t('messageText')}</label>
         <textarea
           value={data.message || ''}
           oninput={(e) => onUpdate({ message: (e.target as HTMLTextAreaElement).value })}
           class="input h-24 resize-y"
-          placeholder="Texte que le client verra..."
+          placeholder={t('messageTextPlaceholder')}
         ></textarea>
       </div>
     {/if}
@@ -996,7 +996,7 @@
           onclick={onDelete}
           class="w-full bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-sm font-medium hover:bg-red-100 cursor-pointer transition-colors"
         >
-          Supprimer le nœud
+          {t('deleteNode')}
         </button>
       </div>
     {/if}
