@@ -58,6 +58,11 @@ const defaultDataByType: Record<NodeType, () => FlowNodeData> = {
     title: 'Enviar para Planilha',
     sheetUrl: '',
     sheetTab: ''
+  }),
+  email: () => ({
+    title: 'Enviar E-mail',
+    emailSubject: 'Bem-vindo(a), {{nome}}!',
+    emailBody: 'Olá {{nome}},\n\nRecebemos seu cadastro no formulário {{formulario}}.\n\nEm breve nossa equipe entrará em contato.'
   })
 };
 

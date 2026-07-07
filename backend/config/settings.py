@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     # Genesis CRM (webhook de integracao tipo 'forms' — URL completa com token)
     genesis_webhook_url: Optional[str] = Field(default=None)
 
+    # Azure Communication Services — e-mail do no "Enviar E-mail" (fallback: Resend)
+    acs_email_connection_string: Optional[str] = Field(default=None)
+    acs_email_sender: Optional[str] = Field(default=None)
+
     # WhatsApp (API direta Meta)
     whatsapp_access_token: Optional[str] = Field(default=None)
     whatsapp_phone_number_id: Optional[str] = Field(default=None)

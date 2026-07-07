@@ -314,6 +314,26 @@
     } catch { /* silent */ }
   }
 
+  function sendEmailNode(nodeId: string) {
+    // Envia o e-mail do no (fire-and-forget, nao bloqueia o fluxo)
+    try {
+      const localDigits = clientData.phone.replace(/\D/g, '');
+      const ddd = clientData.phoneDDD.replace(/\D/g, '');
+      const fullPhone = localDigits ? `+${clientData.phoneCountryCode}${ddd}${localDigits}` : '';
+      fetch('/api/email-node', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flow_id: flow?._id || '',
+          node_id: nodeId,
+          name: clientData.name,
+          email: clientData.email,
+          phone: fullPhone || undefined
+        })
+      }).catch(() => {});
+    } catch { /* silent */ }
+  }
+
   async function processCurrentNode() {
     if (!currentNode) return;
     if (currentNode.type === 'blacklist') {
@@ -348,9 +368,10 @@
         currentNodeId = edge.target;
         processCurrentNode();
       }
-    } else if (currentNode.type === 'sheet') {
-      // Enviar para Planilha: fire-and-forget, avanca imediatamente (invisivel pro lead)
-      sendToSheet(currentNode.id);
+    } else if (currentNode.type === 'sheet' || currentNode.type === 'email') {
+      // Nos de acao (planilha/e-mail): fire-and-forget, avanca imediatamente (invisivel pro lead)
+      if (currentNode.type === 'sheet') sendToSheet(currentNode.id);
+      else sendEmailNode(currentNode.id);
       const edge = flow!.edges.find(e => e.source === currentNodeId);
       if (edge) {
         currentNodeId = edge.target;

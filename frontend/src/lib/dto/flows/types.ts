@@ -1,4 +1,4 @@
-export type NodeType = 'start' | 'question' | 'message' | 'end' | 'blacklist' | 'sheet';
+export type NodeType = 'start' | 'question' | 'message' | 'end' | 'blacklist' | 'sheet' | 'email';
 
 export type QuestionType =
   | 'single_choice'
@@ -50,6 +50,9 @@ export interface FlowNodeData {
   // Sheet node (Enviar para Planilha)
   sheetUrl?: string;
   sheetTab?: string;
+  // Email node (Enviar E-mail) — placeholders: {{nome}}, {{email}}, {{telefone}}, {{formulario}}
+  emailSubject?: string;
+  emailBody?: string;
   // Blacklist node
   blockedMessage?: string;
   blacklistTotalEntries?: number;

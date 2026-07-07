@@ -1058,6 +1058,42 @@
       </div>
     {/if}
 
+    {#if node.type === 'email'}
+      <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+        <div class="flex gap-2">
+          <svg class="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <p class="text-xs text-indigo-700 leading-relaxed">
+            Quando o lead passar por este nó, recebe este e-mail automaticamente. Use as variáveis <code>{'{{nome}}'}</code>, <code>{'{{email}}'}</code>, <code>{'{{telefone}}'}</code> e <code>{'{{formulario}}'}</code> no assunto e no corpo.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Assunto</label>
+        <input
+          type="text"
+          value={data.emailSubject || ''}
+          oninput={(e) => onUpdate({ emailSubject: (e.target as HTMLInputElement).value })}
+          class="input"
+          placeholder="Bem-vindo(a), {'{{nome}}'}!"
+        />
+      </div>
+
+      <div>
+        <label class="label">Corpo do e-mail</label>
+        <textarea
+          value={data.emailBody || ''}
+          oninput={(e) => onUpdate({ emailBody: (e.target as HTMLTextAreaElement).value })}
+          class="input"
+          rows="8"
+          placeholder="Olá {'{{nome}}'}, recebemos seu cadastro..."
+        ></textarea>
+        <p class="text-[10px] text-gray-400 mt-1">Separe parágrafos com uma linha em branco.</p>
+      </div>
+    {/if}
+
     <!-- Delete button -->
     {#if node.type !== 'start'}
       <div class="pt-3 border-t border-gray-100">

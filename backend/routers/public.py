@@ -5,6 +5,7 @@ from services.lead_service import LeadService
 from services.gcal_service import GCalService
 from services.notification_service import NotificationService
 from services.activecampaign_service import ActiveCampaignService
+from services.email_sender_service import EmailSenderService
 from services.genesis_service import GenesisService
 from services.sheets_service import SheetsService
 from dtos.submission.create_submission.request import CreateSubmissionRequest
@@ -26,6 +27,7 @@ _notifications = NotificationService()
 _activecampaign = ActiveCampaignService()
 _sheets = SheetsService()
 _genesis = GenesisService()
+_email_sender = EmailSenderService()
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +118,54 @@ async def create_sheet_entry(request: SheetEntryRequest):
             "utm_campaign": request.utm_campaign,
             "utm_content": request.utm_content,
             "utm_term": request.utm_term,
+        },
+    )
+    return result
+
+
+class EmailNodeRequest(BaseModel):
+    flow_id: str
+    node_id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+
+
+@router.post("/email-node", status_code=201)
+async def send_email_node(request: EmailNodeRequest):
+    """Envia o e-mail configurado no no 'Enviar E-mail' do flow (sem auth).
+
+    Assunto/corpo vem do flow salvo no MongoDB — nunca do cliente.
+    """
+    flow = await _flow_service.get_by_id(request.flow_id)
+    if not flow:
+        raise HTTPException(status_code=404, detail="Flow nao encontrado")
+
+    node = next(
+        (
+            n for n in flow.get("nodes", [])
+            if n.get("id") == request.node_id and n.get("type") == "email"
+        ),
+        None,
+    )
+    if not node:
+        raise HTTPException(status_code=404, detail="No de e-mail nao encontrado no flow")
+
+    node_data = node.get("data", {})
+    subject = node_data.get("emailSubject", "")
+    body = node_data.get("emailBody", "")
+    if not subject and not body:
+        raise HTTPException(status_code=422, detail="No de e-mail sem assunto/corpo configurado")
+
+    result = await _email_sender.send_node_email(
+        to_email=request.email,
+        subject_template=subject,
+        body_template=body,
+        lead_values={
+            "nome": request.name,
+            "email": request.email,
+            "telefone": request.phone or "",
+            "formulario": flow.get("name", ""),
         },
     )
     return result
