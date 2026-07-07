@@ -1009,6 +1009,8 @@
           </svg>
           <p class="text-xs text-emerald-700 leading-relaxed">
             Quando o lead passar por este nó, os dados dele (nome, email, telefone, formulário e UTMs) são adicionados como uma linha na planilha. Se depois ele agendar, a data e o horário são preenchidos na mesma linha.
+            <br /><br />
+            Use uma <strong>planilha (ou aba) vazia</strong> — o sistema cria as colunas sozinho e sempre adiciona abaixo da última linha. Planilha com colunas diferentes do padrão é recusada, pra não bagunçar dados existentes.
           </p>
         </div>
       </div>

@@ -69,17 +69,33 @@ class SheetsService:
         return sheets[0]["properties"]["title"]
 
     def _ensure_headers(self, client, sheet_id: str, tab: str):
-        """Escreve o cabecalho na linha 1 se ainda nao existir."""
+        """Escreve o cabecalho na linha 1 se vazio; recusa planilha com colunas diferentes.
+
+        Regras:
+        - Linha 1 vazia -> escreve o cabecalho padrao (planilha nova)
+        - Linha 1 igual ao padrao (colunas extras a direita OK) -> segue normal
+        - Linha 1 diferente -> ValueError (nunca desalinha dados de planilha existente)
+        """
         res = client.spreadsheets().values().get(
             spreadsheetId=sheet_id, range=f"'{tab}'!A1:L1"
         ).execute()
-        if not res.get("values"):
+        values = res.get("values")
+        if not values:
             client.spreadsheets().values().update(
                 spreadsheetId=sheet_id,
                 range=f"'{tab}'!A1",
                 body={"values": [HEADERS]},
                 valueInputOption="RAW",
             ).execute()
+            return
+
+        existing = [c.strip().lower() for c in values[0]]
+        expected = [c.lower() for c in HEADERS]
+        if existing[: len(expected)] != expected:
+            raise ValueError(
+                f"A aba '{tab}' ja tem colunas diferentes do padrao. "
+                "Use uma planilha/aba vazia (o sistema cria as colunas) ou uma ja no padrao do Forms."
+            )
 
     @staticmethod
     def _format_date_br(date_str: str) -> str:
