@@ -53,6 +53,11 @@ const defaultDataByType: Record<NodeType, () => FlowNodeData> = {
     title: 'Lista negra',
     blockedMessage: 'Desculpe, você não pode agendar uma reunião.',
     blacklistTotalEntries: 0
+  }),
+  sheet: () => ({
+    title: 'Enviar para Planilha',
+    sheetUrl: '',
+    sheetTab: ''
   })
 };
 

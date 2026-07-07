@@ -298,6 +298,18 @@
   const flowIdForBlacklist = $derived(appPage.params.id ?? '');
   let showBlacklistModal = $state(false);
 
+  // Sheet node — email da service account que precisa de acesso Editor na planilha
+  const SHEETS_SA_EMAIL = 'itvalley-cloud-services@infinite-rider-442118-q1.iam.gserviceaccount.com';
+  let saEmailCopied = $state(false);
+  function copySaEmail() {
+    navigator.clipboard.writeText(SHEETS_SA_EMAIL);
+    saEmailCopied = true;
+    setTimeout(() => (saEmailCopied = false), 2000);
+  }
+  const sheetUrlValid = $derived(
+    !node.data?.sheetUrl || /\/spreadsheets\/d\/[a-zA-Z0-9_-]+/.test(node.data.sheetUrl)
+  );
+
   function onBlacklistTotalChanged(total: number) {
     onUpdate({
       blacklistTotalEntries: total,
@@ -986,6 +998,61 @@
         {#if !flowIdForBlacklist || flowIdForBlacklist === 'new'}
           <p class="text-[10px] text-amber-700 mt-1.5">Salve o formulário antes para habilitar a gestão.</p>
         {/if}
+      </div>
+    {/if}
+
+    {#if node.type === 'sheet'}
+      <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+        <div class="flex gap-2">
+          <svg class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <p class="text-xs text-emerald-700 leading-relaxed">
+            Quando o lead passar por este nó, os dados dele (nome, email, telefone, formulário e UTMs) são adicionados como uma linha na planilha. Se depois ele agendar, a data e o horário são preenchidos na mesma linha.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Link da planilha (Google Sheets)</label>
+        <input
+          type="url"
+          value={data.sheetUrl || ''}
+          oninput={(e) => onUpdate({ sheetUrl: (e.target as HTMLInputElement).value })}
+          class="input"
+          placeholder="https://docs.google.com/spreadsheets/d/..."
+        />
+        {#if !sheetUrlValid}
+          <p class="text-[10px] text-red-600 mt-1">Cole o link completo da planilha (deve conter /spreadsheets/d/...)</p>
+        {/if}
+      </div>
+
+      <div>
+        <label class="label">Aba (opcional)</label>
+        <input
+          type="text"
+          value={data.sheetTab || ''}
+          oninput={(e) => onUpdate({ sheetTab: (e.target as HTMLInputElement).value })}
+          class="input"
+          placeholder="Deixe vazio para usar a primeira aba"
+        />
+      </div>
+
+      <div class="border border-amber-200 bg-amber-50 rounded-lg p-3">
+        <p class="text-xs font-semibold text-amber-800 mb-1.5">⚠️ Compartilhe a planilha</p>
+        <p class="text-xs text-amber-700 leading-relaxed mb-2">
+          A planilha precisa ser compartilhada como <strong>Editor</strong> com este e-mail:
+        </p>
+        <div class="flex items-center gap-1.5">
+          <code class="flex-1 text-[10px] bg-white border border-amber-200 rounded px-2 py-1.5 text-gray-700 break-all">{SHEETS_SA_EMAIL}</code>
+          <button
+            type="button"
+            onclick={copySaEmail}
+            class="flex-shrink-0 text-xs bg-amber-600 text-white rounded px-2 py-1.5 hover:bg-amber-700 cursor-pointer transition-colors"
+          >
+            {saEmailCopied ? 'Copiado!' : 'Copiar'}
+          </button>
+        </div>
       </div>
     {/if}
 

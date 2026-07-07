@@ -5,6 +5,7 @@ from services.lead_service import LeadService
 from services.gcal_service import GCalService
 from services.notification_service import NotificationService
 from services.activecampaign_service import ActiveCampaignService
+from services.sheets_service import SheetsService
 from dtos.submission.create_submission.request import CreateSubmissionRequest
 from dtos.submission.create_submission.response import CreateSubmissionResponse
 from config.database import mongodb_client
@@ -22,6 +23,7 @@ _lead_service = LeadService()
 _gcal = GCalService()
 _notifications = NotificationService()
 _activecampaign = ActiveCampaignService()
+_sheets = SheetsService()
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,62 @@ async def create_lead(request: CreateLeadRequest):
     except Exception as e:
         logger.exception("Erro ao criar lead")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class SheetEntryRequest(BaseModel):
+    flow_id: str
+    node_id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+    utm_source: Optional[str] = None
+    utm_medium: Optional[str] = None
+    utm_campaign: Optional[str] = None
+    utm_content: Optional[str] = None
+    utm_term: Optional[str] = None
+
+
+@router.post("/sheet-entry", status_code=201)
+async def create_sheet_entry(request: SheetEntryRequest):
+    """Envia o lead pra planilha configurada no no 'sheet' do flow (sem auth).
+
+    A URL da planilha vem do flow salvo no MongoDB — nunca do cliente.
+    """
+    flow = await _flow_service.get_by_id(request.flow_id)
+    if not flow:
+        raise HTTPException(status_code=404, detail="Flow nao encontrado")
+
+    node = next(
+        (
+            n for n in flow.get("nodes", [])
+            if n.get("id") == request.node_id and n.get("type") == "sheet"
+        ),
+        None,
+    )
+    if not node:
+        raise HTTPException(status_code=404, detail="No de planilha nao encontrado no flow")
+
+    node_data = node.get("data", {})
+    sheet_url = node_data.get("sheetUrl", "")
+    if not sheet_url:
+        raise HTTPException(status_code=422, detail="No de planilha sem URL configurada")
+
+    result = await _sheets.append_lead(
+        sheet_url=sheet_url,
+        tab=node_data.get("sheetTab"),
+        data={
+            "name": request.name,
+            "email": request.email,
+            "phone": request.phone,
+            "flow_slug": flow.get("slug", ""),
+            "utm_source": request.utm_source,
+            "utm_medium": request.utm_medium,
+            "utm_campaign": request.utm_campaign,
+            "utm_content": request.utm_content,
+            "utm_term": request.utm_term,
+        },
+    )
+    return result
 
 
 @router.post("/submissions", status_code=201, response_model=CreateSubmissionResponse)
@@ -191,6 +249,31 @@ async def create_scheduling(request: PublicSchedulingRequest):
 
         result = await db["scheduling"].insert_one(doc)
         doc.pop("_id", None)
+
+        # Planilha: se o flow tem no 'sheet', preenche data/hora do agendamento
+        if request.flow_id:
+            try:
+                flow_full = await _flow_service.get_by_id(request.flow_id)
+                sheet_nodes = [
+                    n for n in (flow_full or {}).get("nodes", [])
+                    if n.get("type") == "sheet" and n.get("data", {}).get("sheetUrl")
+                ]
+                for sheet_node in sheet_nodes:
+                    node_data = sheet_node.get("data", {})
+                    await _sheets.update_scheduling(
+                        sheet_url=node_data["sheetUrl"],
+                        tab=node_data.get("sheetTab"),
+                        email=request.lead_email,
+                        scheduled_date=request.scheduled_date,
+                        scheduled_time=request.scheduled_time,
+                        fallback_data={
+                            "name": request.lead_name,
+                            "phone": request.lead_phone,
+                            "flow_slug": request.flow_slug or (flow_full or {}).get("slug", ""),
+                        },
+                    )
+            except Exception as e:
+                logger.error(f"Erro ao atualizar planilha com agendamento: {e}")
 
         return {
             "id": str(result.inserted_id),

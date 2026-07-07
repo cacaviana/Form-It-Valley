@@ -273,6 +273,44 @@
     }
   }
 
+  function getCookieValue(name: string): string {
+    const parts = `; ${document.cookie}`.split(`; ${name}=`);
+    if (parts.length === 2) return decodeURIComponent(parts.pop()!.split(';').shift() || '');
+    return '';
+  }
+
+  function getUtm(param: string, cookieName: string): string {
+    // URL atual primeiro (mesma prioridade do utm-tracking.js), cookie como fallback
+    const fromUrl = new URLSearchParams(window.location.search).get(param);
+    if (fromUrl) return fromUrl;
+    return getCookieValue(cookieName);
+  }
+
+  function sendToSheet(nodeId: string) {
+    // Envia o lead pra planilha configurada no no (fire-and-forget, nao bloqueia o fluxo)
+    try {
+      const localDigits = clientData.phone.replace(/\D/g, '');
+      const ddd = clientData.phoneDDD.replace(/\D/g, '');
+      const fullPhone = localDigits ? `+${clientData.phoneCountryCode}${ddd}${localDigits}` : '';
+      fetch('/api/sheet-entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flow_id: flow?._id || '',
+          node_id: nodeId,
+          name: clientData.name,
+          email: clientData.email,
+          phone: fullPhone || undefined,
+          utm_source: getUtm('utm_source', 'cookieUtmSource') || 'direto',
+          utm_medium: getUtm('utm_medium', 'cookieUtmMedium') || undefined,
+          utm_campaign: getUtm('utm_campaign', 'cookieUtmCampaign') || undefined,
+          utm_content: getUtm('utm_content', 'cookieUtmContent') || undefined,
+          utm_term: getUtm('utm_term', 'cookieUtmTerm') || undefined
+        })
+      }).catch(() => {});
+    } catch { /* silent */ }
+  }
+
   async function processCurrentNode() {
     if (!currentNode) return;
     if (currentNode.type === 'blacklist') {
@@ -306,6 +344,17 @@
       if (edge) {
         currentNodeId = edge.target;
         processCurrentNode();
+      }
+    } else if (currentNode.type === 'sheet') {
+      // Enviar para Planilha: fire-and-forget, avanca imediatamente (invisivel pro lead)
+      sendToSheet(currentNode.id);
+      const edge = flow!.edges.find(e => e.source === currentNodeId);
+      if (edge) {
+        currentNodeId = edge.target;
+        processCurrentNode();
+      } else {
+        phase = 'end';
+        resultText = 'Obrigado pelas suas respostas!';
       }
     } else if (currentNode.type === 'message') {
       if (messageTimeout) clearTimeout(messageTimeout);

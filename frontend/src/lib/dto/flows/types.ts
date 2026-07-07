@@ -1,4 +1,4 @@
-export type NodeType = 'start' | 'question' | 'message' | 'end' | 'blacklist';
+export type NodeType = 'start' | 'question' | 'message' | 'end' | 'blacklist' | 'sheet';
 
 export type QuestionType =
   | 'single_choice'
@@ -47,6 +47,9 @@ export interface FlowNodeData {
   // ActiveCampaign
   activecampaignListId?: string;
   activecampaignListName?: string;
+  // Sheet node (Enviar para Planilha)
+  sheetUrl?: string;
+  sheetTab?: string;
   // Blacklist node
   blockedMessage?: string;
   blacklistTotalEntries?: number;

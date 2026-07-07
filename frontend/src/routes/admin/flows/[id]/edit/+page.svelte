@@ -18,6 +18,7 @@
   import MessageNode from '$lib/components/builder/nodes/MessageNode.svelte';
   import EndNode from '$lib/components/builder/nodes/EndNode.svelte';
   import BlacklistNode from '$lib/components/builder/nodes/BlacklistNode.svelte';
+  import SheetNode from '$lib/components/builder/nodes/SheetNode.svelte';
   import NodeToolbar from '$lib/components/builder/panels/NodeToolbar.svelte';
   import NodeEditor from '$lib/components/builder/panels/NodeEditor.svelte';
   import { createFlowBuilderStore } from '$lib/stores/flowBuilder.svelte';
@@ -185,7 +186,8 @@ Subvention Roulez Vert (Level 2),-600,unidade,rabais`;
     question: QuestionNode as any,
     message: MessageNode as any,
     end: EndNode as any,
-    blacklist: BlacklistNode as any
+    blacklist: BlacklistNode as any,
+    sheet: SheetNode as any
   };
 
   const selectedNode = $derived(
