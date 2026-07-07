@@ -2,18 +2,20 @@ from data.repositories.mongo.lead_repository import LeadRepository
 from data.repositories.mongo.flow_repository import FlowRepository
 from factories.lead_factory import LeadFactory
 from services.activecampaign_service import ActiveCampaignService
+from services.genesis_service import GenesisService
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class LeadService:
-    """Orquestra criacao de leads — salva no MongoDB e sincroniza com ActiveCampaign."""
+    """Orquestra criacao de leads — salva no MongoDB e sincroniza com ActiveCampaign/Genesis."""
 
     def __init__(self):
         self._repo = LeadRepository()
         self._flow_repo = FlowRepository()
         self._ac = ActiveCampaignService()
+        self._genesis = GenesisService()
 
     async def create(self, data: dict) -> dict:
         """Cria ou atualiza lead. Se ja existe com mesmo email+flow, atualiza."""
@@ -55,6 +57,25 @@ class LeadService:
                 doc["activecampaign_synced"] = ac_synced
             except Exception as e:
                 logger.error(f"Erro ao sincronizar lead com ActiveCampaign: {e}")
+
+        # Genesis CRM (Fase 1b): envia lead — nao-fatal, nunca bloqueia o cadastro
+        try:
+            phone = data.get("client_phone") or ""
+            country_code = data.get("client_phone_country_code") or ""
+            full_phone = f"+{country_code}{phone}" if country_code and phone else phone
+            genesis_result = await self._genesis.send_lead(
+                evento="lead_iniciado",
+                nome=data.get("client_name") or "",
+                email=data["client_email"],
+                telefone=full_phone,
+                flow_slug=data.get("flow_slug") or "",
+                utm_source=data.get("utm_source"),
+                utm_medium=data.get("utm_medium"),
+                utm_campaign=data.get("utm_campaign"),
+            )
+            doc["genesis_synced"] = genesis_result.get("success", False)
+        except Exception as e:
+            logger.error(f"Erro ao enviar lead pro Genesis: {e}")
 
         doc["id"] = str(doc["_id"])
         doc.pop("_id", None)

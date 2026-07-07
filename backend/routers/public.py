@@ -5,6 +5,7 @@ from services.lead_service import LeadService
 from services.gcal_service import GCalService
 from services.notification_service import NotificationService
 from services.activecampaign_service import ActiveCampaignService
+from services.genesis_service import GenesisService
 from services.sheets_service import SheetsService
 from dtos.submission.create_submission.request import CreateSubmissionRequest
 from dtos.submission.create_submission.response import CreateSubmissionResponse
@@ -24,6 +25,7 @@ _gcal = GCalService()
 _notifications = NotificationService()
 _activecampaign = ActiveCampaignService()
 _sheets = SheetsService()
+_genesis = GenesisService()
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,9 @@ class CreateLeadRequest(BaseModel):
     client_address: Optional[str] = None
     activecampaign_list_id: Optional[str] = None
     tenant_id: Optional[str] = "tenant_1"
+    utm_source: Optional[str] = None
+    utm_medium: Optional[str] = None
+    utm_campaign: Optional[str] = None
 
 
 @router.post("/leads", status_code=201)
@@ -274,6 +279,20 @@ async def create_scheduling(request: PublicSchedulingRequest):
                     )
             except Exception as e:
                 logger.error(f"Erro ao atualizar planilha com agendamento: {e}")
+
+        # Genesis CRM (Fase 1b): agendamento confirmado — nao-fatal
+        try:
+            await _genesis.send_lead(
+                evento="agendamento_confirmado",
+                nome=request.lead_name,
+                email=request.lead_email,
+                telefone=request.lead_phone or "",
+                flow_slug=request.flow_slug or "",
+                agendamento_data=request.scheduled_date,
+                agendamento_hora=request.scheduled_time,
+            )
+        except Exception as e:
+            logger.error(f"Erro ao enviar agendamento pro Genesis: {e}")
 
         return {
             "id": str(result.inserted_id),

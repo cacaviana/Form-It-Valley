@@ -259,6 +259,9 @@
           client_phone_country_code: fullPhone ? clientData.phoneCountryCode : undefined,
           client_address: clientData.address || undefined,
           activecampaign_list_id: flow?.activecampaign_list_id || undefined,
+          utm_source: getUtm('utm_source', 'cookieUtmSource') || 'direto',
+          utm_medium: getUtm('utm_medium', 'cookieUtmMedium') || undefined,
+          utm_campaign: getUtm('utm_campaign', 'cookieUtmCampaign') || undefined,
         })
       }).catch(() => {}); // nao bloqueia o fluxo
     } catch { /* silent */ }

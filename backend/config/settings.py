@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     activecampaign_api_key: Optional[str] = Field(default=None)
     activecampaign_api_url: Optional[str] = Field(default=None)
 
+    # Genesis CRM (webhook de integracao tipo 'forms' — URL completa com token)
+    genesis_webhook_url: Optional[str] = Field(default=None)
+
     # WhatsApp (API direta Meta)
     whatsapp_access_token: Optional[str] = Field(default=None)
     whatsapp_phone_number_id: Optional[str] = Field(default=None)
