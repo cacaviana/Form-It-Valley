@@ -26,15 +26,21 @@ jobs:
       working-directory: frontend
       run: npm run build
 
+    # Publica o projeto com a pasta build/ ANINHADA (build/index.js) + deps de producao.
+    # Esse e o layout que o startup command do App Service espera: "node build".
+    # (Nao achatar build/ pra raiz, senao o entry vira ./index.js e exige "node index.js".)
     - name: Prepare deploy package
       working-directory: frontend
       run: |
-        cp package.json build/
-        cd build && npm install --omit=dev
+        rm -rf deploy
+        mkdir deploy
+        cp -r build deploy/build
+        cp package.json package-lock.json deploy/
+        cd deploy && npm install --omit=dev
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
         app-name: 'formsitvalleyfrontend'
         publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FRONTEND }}
-        package: frontend/build
+        package: frontend/deploy
