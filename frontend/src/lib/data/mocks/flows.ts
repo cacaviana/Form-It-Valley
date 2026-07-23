@@ -3,7 +3,7 @@ import type { Flow } from '$lib/dto/flows/types';
 export const flowsMock: Flow[] = [
   {
     _id: 'flow_1',
-    tenant_id: 'tenant_1',
+    tenant_id: 'itvalley',
     name: 'Devis Installation Borne',
     slug: 'total-electrique-borne',
     status: 'published',

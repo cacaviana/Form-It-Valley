@@ -12,10 +12,14 @@ class SubmissionFactory:
     def create_new(cls, data: dict, end_node: dict) -> dict:
         """Cria submission a partir dos dados do request + info do end node."""
 
+        tenant_id = data.get("tenant_id")
+        if not tenant_id:
+            raise ValueError("tenant_id e obrigatorio (resolvido pelo flow, nunca pelo cliente)")
+
         end_type = end_node.get("data", {}).get("endType", "thank_you")
 
         return {
-            "tenant_id": data.get("tenant_id", "tenant_1"),
+            "tenant_id": tenant_id,
             "flow_id": data["flow_id"],
             "flow_slug": data["flow_slug"],
             "client_name": data["client_name"],

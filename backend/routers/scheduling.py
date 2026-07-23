@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
@@ -10,6 +10,7 @@ from services.gcal_service import GCalService
 from services.notification_service import NotificationService
 from services.activecampaign_service import ActiveCampaignService
 from config.database import mongodb_client
+from dependencies.tenant import TenantContext, get_tenant_context
 
 router = APIRouter(prefix="/api/scheduling", tags=["scheduling"])
 
@@ -19,10 +20,14 @@ _activecampaign = ActiveCampaignService()
 
 
 @router.get("")
-async def list_schedulings(month: Optional[int] = None, year: Optional[int] = None):
-    """Lista agendamentos (admin). Se month/year informados, filtra por scheduled_date do mes."""
+async def list_schedulings(
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    ctx: TenantContext = Depends(get_tenant_context),
+):
+    """Lista agendamentos do tenant (admin). Se month/year informados, filtra por scheduled_date do mes."""
     db = mongodb_client.database
-    query: dict = {}
+    query: dict = {"tenant_id": ctx.tenant_id}
     if month and year:
         query["scheduled_date"] = {"$regex": f"^{year:04d}-{month:02d}"}
     docs = await db["scheduling"].find(query).sort("created_at", -1).to_list(1000)
@@ -68,16 +73,19 @@ class CreateSchedulingRequest(BaseModel):
 
 
 @router.post("", status_code=201)
-async def create_scheduling(request: CreateSchedulingRequest):
+async def create_scheduling(
+    request: CreateSchedulingRequest,
+    ctx: TenantContext = Depends(get_tenant_context),
+):
     """Cria agendamento: Google Calendar + Email + WhatsApp + ActiveCampaign + MongoDB."""
     try:
-        return await _do_create_scheduling(request)
+        return await _do_create_scheduling(request, tenant_id=ctx.tenant_id)
     except Exception as e:
         logger.exception("Erro ao criar agendamento")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def _do_create_scheduling(request: CreateSchedulingRequest):
+async def _do_create_scheduling(request: CreateSchedulingRequest, tenant_id: str):
     # 1. Google Calendar
     event_title = None
     if request.flow_id:
@@ -165,6 +173,7 @@ async def _do_create_scheduling(request: CreateSchedulingRequest):
     # 4. Salvar no MongoDB
     db = mongodb_client.database
     doc = {
+        "tenant_id": tenant_id,
         "flow_id": request.flow_id,
         "flow_slug": request.flow_slug,
         "lead_name": request.lead_name,

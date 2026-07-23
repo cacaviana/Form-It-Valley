@@ -11,8 +11,11 @@ class LeadFactory:
     @classmethod
     def create_new(cls, data: dict) -> dict:
         """Cria lead a partir dos dados do formulario inicial."""
+        tenant_id = data.get("tenant_id")
+        if not tenant_id:
+            raise ValueError("tenant_id e obrigatorio (resolvido pelo flow, nunca pelo cliente)")
         return {
-            "tenant_id": data.get("tenant_id", "tenant_1"),
+            "tenant_id": tenant_id,
             "flow_id": data["flow_id"],
             "flow_slug": data["flow_slug"],
             "client_name": data["client_name"],

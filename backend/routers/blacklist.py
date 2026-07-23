@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
 from dtos.blacklist.upload_csv.response import UploadBlacklistCsvResponse
 from dtos.blacklist.check_lead.request import CheckLeadRequest
 from dtos.blacklist.check_lead.response import CheckLeadResponse
 from services.blacklist_service import BlacklistService
+from dependencies.tenant import TenantContext, get_tenant_context
 
 
 class AddEntryRequest(BaseModel):
@@ -12,7 +13,6 @@ class AddEntryRequest(BaseModel):
     ddi: Optional[str] = None
     ddd: Optional[str] = None
     numero: Optional[str] = None
-    tenant_id: Optional[str] = "tenant_1"
 
 
 class RemoveEntryRequest(BaseModel):
@@ -30,7 +30,7 @@ async def upload_csv(
     file: UploadFile = File(..., description="CSV com header email,ddi,ddd,numero"),
     scope_type: str = Form(default="flow"),
     scope_id: str = Form(...),
-    tenant_id: str = Form(default="tenant_1"),
+    ctx: TenantContext = Depends(get_tenant_context),
 ):
     """Upload de CSV. Header obrigatorio: email,ddi,ddd,numero."""
     raw = await file.read()
@@ -46,7 +46,7 @@ async def upload_csv(
         csv_text=csv_text,
         scope_type=scope_type,
         scope_id=scope_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
     )
     if not result.get("ok"):
         raise HTTPException(status_code=400, detail={
@@ -63,40 +63,44 @@ async def upload_csv(
 
 
 @router.get("/by-flow/{flow_id}")
-async def get_metadata(flow_id: str):
+async def get_metadata(flow_id: str, ctx: TenantContext = Depends(get_tenant_context)):
     """Metadados (total, last_upload). NAO devolve as entries por privacidade."""
-    meta = await _service.get_metadata("flow", flow_id)
+    meta = await _service.get_metadata("flow", flow_id, tenant_id=ctx.tenant_id)
     if not meta:
         return {"exists": False, "total_entries": 0}
     return {"exists": True, **meta}
 
 
 @router.delete("/by-flow/{flow_id}", status_code=204)
-async def delete_blacklist(flow_id: str):
-    deleted = await _service.delete("flow", flow_id)
+async def delete_blacklist(flow_id: str, ctx: TenantContext = Depends(get_tenant_context)):
+    deleted = await _service.delete("flow", flow_id, tenant_id=ctx.tenant_id)
     if deleted == 0:
         raise HTTPException(status_code=404, detail="Blacklist nao encontrada")
     return None
 
 
 @router.get("/by-flow/{flow_id}/attempts")
-async def list_attempts(flow_id: str):
+async def list_attempts(flow_id: str, ctx: TenantContext = Depends(get_tenant_context)):
     """Historico de tentativas bloqueadas para o flow."""
-    attempts = await _service.list_attempts(flow_id)
+    attempts = await _service.list_attempts(flow_id, tenant_id=ctx.tenant_id)
     return {"attempts": attempts, "total": len(attempts)}
 
 
 @router.get("/by-flow/{flow_id}/entries")
-async def list_entries(flow_id: str):
+async def list_entries(flow_id: str, ctx: TenantContext = Depends(get_tenant_context)):
     """Lista completa das entries da blacklist. APENAS admin autenticado."""
-    entries = await _service.list_entries("flow", flow_id)
+    entries = await _service.list_entries("flow", flow_id, tenant_id=ctx.tenant_id)
     return {"entries": entries, "total": len(entries)}
 
 
 @router.post("/by-flow/{flow_id}/entries", status_code=201)
-async def add_entry(flow_id: str, payload: AddEntryRequest):
+async def add_entry(
+    flow_id: str,
+    payload: AddEntryRequest,
+    ctx: TenantContext = Depends(get_tenant_context),
+):
     result = await _service.add_entry(
-        tenant_id=payload.tenant_id or "tenant_1",
+        tenant_id=ctx.tenant_id,
         scope_type="flow",
         scope_id=flow_id,
         email=payload.email,
@@ -110,12 +114,17 @@ async def add_entry(flow_id: str, payload: AddEntryRequest):
 
 
 @router.delete("/by-flow/{flow_id}/entries")
-async def remove_entry(flow_id: str, payload: RemoveEntryRequest):
+async def remove_entry(
+    flow_id: str,
+    payload: RemoveEntryRequest,
+    ctx: TenantContext = Depends(get_tenant_context),
+):
     result = await _service.remove_entry(
         scope_type="flow",
         scope_id=flow_id,
         email=payload.email,
         phone=payload.phone,
+        tenant_id=ctx.tenant_id,
     )
     if not result.get("ok"):
         raise HTTPException(status_code=404, detail=result.get("error", "Entrada nao encontrada"))
@@ -126,11 +135,11 @@ async def remove_entry(flow_id: str, payload: RemoveEntryRequest):
 async def check_lead(payload: CheckLeadRequest):
     """Endpoint publico — frontend chama antes do agendamento.
 
-    Sem auth (lead anonimo). Retorna {blocked, matched_field}.
+    Sem auth (lead anonimo). O tenant e resolvido pelo documento do flow —
+    NUNCA vem do cliente. Retorna {blocked, matched_field}.
     """
     result = await _service.check_lead(
         flow_id=payload.flow_id,
-        tenant_id=payload.tenant_id or "tenant_1",
         email=payload.email,
         ddi=payload.ddi,
         ddd=payload.ddd,

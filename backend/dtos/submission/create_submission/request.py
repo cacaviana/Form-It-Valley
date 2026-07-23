@@ -18,4 +18,3 @@ class CreateSubmissionRequest(BaseModel):
     client_address: Optional[str] = None
     answers: list[SubmissionAnswer] = Field(..., min_length=1)
     end_node_id: str = Field(..., min_length=1)
-    tenant_id: Optional[str] = Field(default="tenant_1")

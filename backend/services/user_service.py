@@ -39,16 +39,22 @@ class UserService:
     def _collection(self):
         return mongodb_client.database[self._collection_name]
 
-    async def list_all(self) -> list[dict]:
-        """Lista todos os usuarios ativos (sem senha)."""
-        docs = await self._collection.find({"active": {"$ne": False}}).sort("created_at", -1).to_list(200)
+    async def list_all(self, tenant_id: Optional[str] = None) -> list[dict]:
+        """Lista todos os usuarios ativos do tenant (sem senha)."""
+        query: dict = {"active": {"$ne": False}}
+        if tenant_id:
+            query["tenant_id"] = tenant_id
+        docs = await self._collection.find(query).sort("created_at", -1).to_list(200)
         return [_sanitize(doc) for doc in docs]
 
-    async def get_by_id(self, user_id: str) -> Optional[dict]:
+    async def get_by_id(self, user_id: str, tenant_id: Optional[str] = None) -> Optional[dict]:
         """Busca usuario por ID."""
         from bson import ObjectId
+        query: dict = {}
+        if tenant_id:
+            query["tenant_id"] = tenant_id
         try:
-            doc = await self._collection.find_one({"_id": ObjectId(user_id)})
+            doc = await self._collection.find_one({"_id": ObjectId(user_id), **query})
         except Exception:
             return None
         if not doc:
@@ -71,7 +77,7 @@ class UserService:
             return None
         return _sanitize(doc)
 
-    async def create(self, data: dict) -> dict:
+    async def create(self, data: dict, tenant_id: Optional[str] = None) -> dict:
         """Cria novo usuario."""
         existing = await self.get_by_email(data["email"])
         if existing:
@@ -81,6 +87,7 @@ class UserService:
 
         from datetime import datetime, timezone
         doc = {
+            "tenant_id": tenant_id,
             "name": data["name"],
             "email": data["email"],
             "password_hash": password_hash,
@@ -94,13 +101,14 @@ class UserService:
         doc["_id"] = result.inserted_id
         return _sanitize(doc)
 
-    async def update(self, user_id: str, data: dict) -> Optional[dict]:
+    async def update(self, user_id: str, data: dict, tenant_id: Optional[str] = None) -> Optional[dict]:
         """Atualiza usuario."""
         from bson import ObjectId
         try:
             oid = ObjectId(user_id)
         except Exception:
             return None
+        tfilter: dict = {"tenant_id": tenant_id} if tenant_id else {}
 
         update_fields: dict = {}
         if "name" in data:
@@ -117,17 +125,18 @@ class UserService:
             update_fields["password_salt"] = ps
 
         if not update_fields:
-            return await self.get_by_id(user_id)
+            return await self.get_by_id(user_id, tenant_id=tenant_id)
 
-        await self._collection.update_one({"_id": oid}, {"$set": update_fields})
-        return await self.get_by_id(user_id)
+        await self._collection.update_one({"_id": oid, **tfilter}, {"$set": update_fields})
+        return await self.get_by_id(user_id, tenant_id=tenant_id)
 
-    async def delete(self, user_id: str) -> bool:
+    async def delete(self, user_id: str, tenant_id: Optional[str] = None) -> bool:
         """Soft delete — marca active=False."""
         from bson import ObjectId
+        tfilter: dict = {"tenant_id": tenant_id} if tenant_id else {}
         try:
             result = await self._collection.update_one(
-                {"_id": ObjectId(user_id)},
+                {"_id": ObjectId(user_id), **tfilter},
                 {"$set": {"active": False}},
             )
             return result.modified_count > 0
