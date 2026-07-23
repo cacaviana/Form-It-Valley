@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { clearSsoCookie } from '$lib/utils/sso';
 
   let user = $state<{ name: string; email: string; permissions: string[]; is_super_admin?: boolean } | null>(null);
 
@@ -19,6 +20,7 @@
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    clearSsoCookie();
     goto('/login');
   }
 
