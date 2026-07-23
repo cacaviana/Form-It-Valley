@@ -13,3 +13,7 @@ google-auth>=2.20.0
 google-api-python-client>=2.90.0
 itvalleysecurity>=0.1.0
 gunicorn
+
+# Dev/test
+pytest>=9
+pytest-asyncio>=1
