@@ -1,10 +1,17 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { tryAdoptSsoSession } from '$lib/utils/sso';
 
   onMount(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
+      goto('/admin');
+      return;
+    }
+    // SSO Petra Suite: cookie petra_sso valido tambem entra direto no /admin.
+    const sso = tryAdoptSsoSession();
+    if (sso && sso !== 'denied') {
       goto('/admin');
     } else {
       goto('/login');

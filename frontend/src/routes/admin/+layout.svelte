@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { readSsoCookie } from '$lib/utils/sso';
+  import { tryAdoptSsoSession } from '$lib/utils/sso';
 
   let { children } = $props();
 
@@ -10,42 +10,11 @@
   let checking = $state(true);
   let ssoDenied = $state(false);
 
-  // SSO Petra Suite: sem sessao local, tenta o cookie petra_sso do portal.
-  // Retorna o access_token adotado, 'denied' se o plano nao inclui o Calenda,
-  // ou null quando nao ha cookie utilizavel.
-  function tentarSso(): string | 'denied' | null {
-    const raw = readSsoCookie();
-    if (!raw) return null;
-    try {
-      const sso = JSON.parse(raw);
-      if (!sso?.access_token) return null;
-      const products: string[] = Array.isArray(sso.products) ? sso.products : [];
-      const isMaster = sso.tenant?.is_master === true;
-      if (!products.includes('calenda') && !isMaster) return 'denied';
-
-      // Mesmo shape de sessao gravado pelo /login local.
-      const sessionUser = {
-        ...(sso.user ?? {}),
-        tenant: sso.tenant ?? null,
-        products,
-        permissions: Array.isArray(sso.user?.permissions)
-          ? sso.user.permissions
-          : ['scheduling', 'flows', 'settings', 'users'],
-        is_super_admin: isMaster || sso.user?.is_super_admin === true
-      };
-      localStorage.setItem('access_token', sso.access_token);
-      if (sso.refresh_token) localStorage.setItem('refresh_token', sso.refresh_token);
-      localStorage.setItem('user', JSON.stringify(sessionUser));
-      return sso.access_token as string;
-    } catch {
-      return null;
-    }
-  }
-
   onMount(() => {
     let token = localStorage.getItem('access_token');
     if (!token) {
-      const sso = tentarSso();
+      // SSO Petra Suite: sem sessao local, tenta o cookie petra_sso do portal.
+      const sso = tryAdoptSsoSession();
       if (sso === 'denied') {
         ssoDenied = true;
         checking = false;
