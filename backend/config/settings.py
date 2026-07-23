@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = Field(default=["*"])
 
+    # Petra Suite — identidade central (login proxy)
+    platform_auth_url: str = Field(
+        default="https://suite-api.petrasuite.ai",
+        description="Base URL da API de identidade da Petra Suite",
+    )
+
     # AI Provider: "openai" ou "anthropic"
     ai_provider: str = Field(default="openai")
 

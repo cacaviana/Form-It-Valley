@@ -16,27 +16,31 @@ class SubmissionService:
         self._mapper = SubmissionMapper
         self._quote_generator = QuoteGenerator
 
-    async def list_all(self) -> dict:
-        docs = await self._repository.find_all()
+    async def list_all(self, tenant_id: str) -> dict:
+        docs = await self._repository.find_all(tenant_id=tenant_id)
         summaries = [self._mapper.to_summary(doc) for doc in docs]
         return {"submissions": summaries, "total": len(summaries)}
 
-    async def list_by_flow(self, flow_id: str) -> dict:
-        docs = await self._repository.find_by_flow(flow_id)
+    async def list_by_flow(self, flow_id: str, tenant_id: str) -> dict:
+        docs = await self._repository.find_by_flow(flow_id, tenant_id=tenant_id)
         items = [self._mapper.to_response(doc) for doc in docs]
         return {"submissions": items, "total": len(items)}
 
-    async def get_by_id(self, id: str) -> Optional[dict]:
-        doc = await self._repository.find_by_id(id)
+    async def get_by_id(self, id: str, tenant_id: Optional[str] = None) -> Optional[dict]:
+        doc = await self._repository.find_by_id(id, tenant_id=tenant_id)
         if not doc:
             return None
         return self._mapper.to_response(doc)
 
-    async def create(self, data: dict) -> dict:
-        # Buscar flow para pegar o end_node com businessContext
-        flow_doc = await self._flow_repository.find_by_id(data["flow_id"])
+    async def create(self, data: dict, tenant_id: Optional[str] = None) -> dict:
+        # Buscar flow para pegar o end_node com businessContext.
+        # Rota publica (tenant_id=None): o tenant SAI do documento do flow —
+        # nunca do cliente. Rota autenticada: o flow precisa pertencer ao tenant.
+        flow_doc = await self._flow_repository.find_by_id(data["flow_id"], tenant_id=tenant_id)
         if not flow_doc:
             raise ValueError("Flow nao encontrado")
+
+        data = {**data, "tenant_id": flow_doc.get("tenant_id")}
 
         # Encontrar o end_node
         end_node = None
@@ -77,11 +81,11 @@ class SubmissionService:
         saved = await self._repository.insert(submission_doc)
         return self._mapper.to_response(saved)
 
-    async def delete(self, id: str) -> bool:
-        return await self._repository.delete(id)
+    async def delete(self, id: str, tenant_id: Optional[str] = None) -> bool:
+        return await self._repository.delete(id, tenant_id=tenant_id)
 
-    async def hide(self, id: str) -> bool:
-        return await self._repository.hide(id)
+    async def hide(self, id: str, tenant_id: Optional[str] = None) -> bool:
+        return await self._repository.hide(id, tenant_id=tenant_id)
 
 
 def _build_catalog_map(nodes: list) -> dict[str, str]:

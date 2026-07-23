@@ -36,11 +36,15 @@ class FlowFactory:
         if not has_start:
             raise ValueError("Flow precisa ter pelo menos um no de inicio (start)")
 
+        tenant_id = data.get("tenant_id")
+        if not tenant_id:
+            raise ValueError("tenant_id e obrigatorio (resolvido pelo JWT, nunca pelo cliente)")
+
         now = cls._now_iso()
         slug = data.get("slug") or cls._generate_slug(data["name"])
 
         doc = {
-            "tenant_id": data.get("tenant_id", "tenant_1"),
+            "tenant_id": tenant_id,
             "name": data["name"],
             "slug": slug,
             "status": data.get("status", "draft"),

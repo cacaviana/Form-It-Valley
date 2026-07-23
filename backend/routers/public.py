@@ -50,7 +50,6 @@ class CreateLeadRequest(BaseModel):
     client_phone_country_code: Optional[str] = None
     client_address: Optional[str] = None
     activecampaign_list_id: Optional[str] = None
-    tenant_id: Optional[str] = "tenant_1"
     utm_source: Optional[str] = None
     utm_medium: Optional[str] = None
     utm_campaign: Optional[str] = None
@@ -58,10 +57,15 @@ class CreateLeadRequest(BaseModel):
 
 @router.post("/leads", status_code=201)
 async def create_lead(request: CreateLeadRequest):
-    """Cria lead ao clicar em Comecar — salva no MongoDB + ActiveCampaign (sem auth)."""
+    """Cria lead ao clicar em Comecar — salva no MongoDB + ActiveCampaign (sem auth).
+
+    O tenant e resolvido pelo documento do flow — nunca vem do cliente.
+    """
     try:
         result = await _lead_service.create(request.model_dump())
         return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.exception("Erro ao criar lead")
         raise HTTPException(status_code=500, detail=str(e))
@@ -281,8 +285,28 @@ async def create_scheduling(request: PublicSchedulingRequest):
             email_sent = await email_task
             whatsapp_sent = False
 
+        # Tenant sai do documento do flow (rota publica — nunca do cliente)
+        sched_tenant_id = None
+        if request.flow_id:
+            try:
+                from data.repositories.mongo.flow_repository import FlowRepository
+                _f = await FlowRepository().find_by_id(request.flow_id)
+                if _f:
+                    sched_tenant_id = _f.get("tenant_id")
+            except Exception:
+                pass
+        if not sched_tenant_id and request.flow_slug:
+            try:
+                from data.repositories.mongo.flow_repository import FlowRepository
+                _f = await FlowRepository().find_by_slug(request.flow_slug)
+                if _f:
+                    sched_tenant_id = _f.get("tenant_id")
+            except Exception:
+                pass
+
         db = mongodb_client.database
         doc = {
+            "tenant_id": sched_tenant_id,
             "flow_id": request.flow_id,
             "flow_slug": request.flow_slug,
             "lead_name": request.lead_name,

@@ -8,4 +8,3 @@ class CheckLeadRequest(BaseModel):
     ddi: Optional[str] = None
     ddd: Optional[str] = None
     numero: Optional[str] = None
-    tenant_id: Optional[str] = Field(default="tenant_1")

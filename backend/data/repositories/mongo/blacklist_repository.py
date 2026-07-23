@@ -46,11 +46,16 @@ class BlacklistRepository(BaseRepository):
 
     # ------- metodos de dominio -------
 
-    async def find_by_scope(self, scope_type: str, scope_id: str) -> Optional[dict]:
-        return await self._collection.find_one({
+    async def find_by_scope(
+        self, scope_type: str, scope_id: str, tenant_id: Optional[str] = None
+    ) -> Optional[dict]:
+        query = {
             "scope_type": scope_type,
             "scope_id": scope_id,
-        })
+        }
+        if tenant_id:
+            query["tenant_id"] = tenant_id
+        return await self._collection.find_one(query)
 
     async def upsert(self, doc: dict) -> dict:
         """Insere ou substitui blacklist do mesmo escopo."""
@@ -69,9 +74,14 @@ class BlacklistRepository(BaseRepository):
             doc["_id"] = result.inserted_id
         return doc
 
-    async def delete_by_scope(self, scope_type: str, scope_id: str) -> int:
-        result = await self._collection.delete_many({
+    async def delete_by_scope(
+        self, scope_type: str, scope_id: str, tenant_id: Optional[str] = None
+    ) -> int:
+        query = {
             "scope_type": scope_type,
             "scope_id": scope_id,
-        })
+        }
+        if tenant_id:
+            query["tenant_id"] = tenant_id
+        result = await self._collection.delete_many(query)
         return result.deleted_count

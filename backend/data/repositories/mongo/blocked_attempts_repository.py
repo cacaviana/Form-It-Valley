@@ -42,6 +42,11 @@ class BlockedAttemptsRepository(BaseRepository):
 
     # ------- metodos de dominio -------
 
-    async def find_by_flow(self, flow_id: str, limit: int = 200) -> list[dict]:
-        cursor = self._collection.find({"flow_id": flow_id}).sort("blocked_at", -1)
+    async def find_by_flow(
+        self, flow_id: str, tenant_id: Optional[str] = None, limit: int = 200
+    ) -> list[dict]:
+        query: dict = {"flow_id": flow_id}
+        if tenant_id:
+            query["tenant_id"] = tenant_id
+        cursor = self._collection.find(query).sort("blocked_at", -1)
         return await cursor.to_list(length=limit)

@@ -1,6 +1,7 @@
 from typing import Optional
 from data.repositories.mongo.blacklist_repository import BlacklistRepository
 from data.repositories.mongo.blocked_attempts_repository import BlockedAttemptsRepository
+from data.repositories.mongo.flow_repository import FlowRepository
 from factories.blacklist_factory import BlacklistFactory
 from mappers.blacklist_mapper import BlacklistMapper, BlockedAttemptMapper
 
@@ -11,6 +12,7 @@ class BlacklistService:
     def __init__(self):
         self._repo = BlacklistRepository()
         self._attempts = BlockedAttemptsRepository()
+        self._flow_repo = FlowRepository()
         self._factory = BlacklistFactory
         self._mapper = BlacklistMapper
         self._attempt_mapper = BlockedAttemptMapper
@@ -48,18 +50,18 @@ class BlacklistService:
             "csv_uploaded_at": saved["csv_uploaded_at"],
         }
 
-    async def get_metadata(self, scope_type: str, scope_id: str) -> Optional[dict]:
-        doc = await self._repo.find_by_scope(scope_type, scope_id)
+    async def get_metadata(self, scope_type: str, scope_id: str, tenant_id: str) -> Optional[dict]:
+        doc = await self._repo.find_by_scope(scope_type, scope_id, tenant_id=tenant_id)
         if not doc:
             return None
         return self._mapper.to_metadata(doc)
 
-    async def delete(self, scope_type: str, scope_id: str) -> int:
-        return await self._repo.delete_by_scope(scope_type, scope_id)
+    async def delete(self, scope_type: str, scope_id: str, tenant_id: str) -> int:
+        return await self._repo.delete_by_scope(scope_type, scope_id, tenant_id=tenant_id)
 
-    async def list_entries(self, scope_type: str, scope_id: str) -> list[dict]:
+    async def list_entries(self, scope_type: str, scope_id: str, tenant_id: str) -> list[dict]:
         """Retorna as entries (email + telefone). Uso apenas por admin autenticado."""
-        doc = await self._repo.find_by_scope(scope_type, scope_id)
+        doc = await self._repo.find_by_scope(scope_type, scope_id, tenant_id=tenant_id)
         if not doc:
             return []
         return doc.get("entries", [])
@@ -79,7 +81,7 @@ class BlacklistService:
         if not norm_email and not norm_phone:
             return {"ok": False, "error": "Forneca email valido ou telefone"}
 
-        doc = await self._repo.find_by_scope(scope_type, scope_id)
+        doc = await self._repo.find_by_scope(scope_type, scope_id, tenant_id=tenant_id)
         if not doc:
             # Cria a blacklist com 1 entry
             new_doc = self._factory.create_document(
@@ -109,13 +111,14 @@ class BlacklistService:
         scope_id: str,
         email: Optional[str],
         phone: Optional[str],
+        tenant_id: Optional[str] = None,
     ) -> dict:
         """Remove uma entry exata (email + phone normalizados)."""
         norm_email = self._factory.normalize_email(email) if email else None
         # phone aqui ja deve vir normalizado (frontend manda assim) ou vai como string crua
         norm_phone = self._factory.digits_only(phone) if phone else None
 
-        doc = await self._repo.find_by_scope(scope_type, scope_id)
+        doc = await self._repo.find_by_scope(scope_type, scope_id, tenant_id=tenant_id)
         if not doc:
             return {"ok": False, "error": "Lista nao encontrada"}
 
@@ -131,14 +134,13 @@ class BlacklistService:
         await self._repo.upsert(doc)
         return {"ok": True, "total_entries": len(entries)}
 
-    async def list_attempts(self, flow_id: str) -> list[dict]:
-        docs = await self._attempts.find_by_flow(flow_id)
+    async def list_attempts(self, flow_id: str, tenant_id: Optional[str] = None) -> list[dict]:
+        docs = await self._attempts.find_by_flow(flow_id, tenant_id=tenant_id)
         return [self._attempt_mapper.to_response(d) for d in docs]
 
     async def check_lead(
         self,
         flow_id: str,
-        tenant_id: str,
         email: Optional[str],
         ddi: Optional[str],
         ddd: Optional[str],
@@ -146,6 +148,7 @@ class BlacklistService:
     ) -> dict:
         """Compara dados do lead contra a blacklist do flow.
 
+        Rota publica: o tenant SAI do documento do flow — nunca do cliente.
         Match em qualquer campo (email OU telefone) ja bloqueia.
         Se bloqueado, salva auditoria em blocked_attempts.
         """
@@ -156,7 +159,12 @@ class BlacklistService:
         if not norm_email and not norm_phone:
             return {"blocked": False, "matched_field": None}
 
-        bl = await self._repo.find_by_scope("flow", flow_id)
+        flow_doc = await self._flow_repo.find_by_id(flow_id)
+        if not flow_doc:
+            return {"blocked": False, "matched_field": None}
+        tenant_id = flow_doc.get("tenant_id")
+
+        bl = await self._repo.find_by_scope("flow", flow_id, tenant_id=tenant_id)
         if not bl:
             return {"blocked": False, "matched_field": None}
 

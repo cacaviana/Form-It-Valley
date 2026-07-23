@@ -1,15 +1,20 @@
-import os
-from fastapi import APIRouter, HTTPException, Response
-from itvalleysecurity.fastapi import login_response
+"""Login do Forms — proxy fino para a identidade central da Petra Suite.
+
+O Forms nao autentica mais localmente: repassa email/senha para a plataforma
+(PLATFORM_AUTH_URL) e devolve a resposta como esta (access_token, refresh_token,
+user, tenant, products). O JWT emitido pela plataforma usa o mesmo
+JWT_SECRET_KEY configurado aqui, entao require_access valida direto.
+"""
+import logging
+import httpx
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from services.user_service import UserService
+from config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-_user_service = UserService()
-
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@itvalley.com")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Itvalley01")
 
 
 class LoginRequest(BaseModel):
@@ -18,34 +23,26 @@ class LoginRequest(BaseModel):
 
 
 @router.post("/login")
-async def login(body: LoginRequest, response: Response):
-    """Autentica usuario e retorna tokens JWT."""
+async def login(body: LoginRequest):
+    """Autentica na plataforma Petra Suite e devolve a resposta (proxy fino)."""
+    url = f"{settings.platform_auth_url.rstrip('/')}/api/auth/login"
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                url,
+                json={"email": body.email, "password": body.password},
+            )
+    except httpx.HTTPError as e:
+        logger.error(f"Erro ao contatar a plataforma de identidade: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail="Servico de autenticacao indisponivel. Tente novamente.",
+        )
 
-    # 1. Super-admin (do .env) — acesso total
-    if body.email == ADMIN_EMAIL and body.password == ADMIN_PASSWORD:
-        tokens = login_response(response, sub=body.email, email=body.email, set_cookies=False)
-        return {
-            **tokens,
-            "user": {
-                "name": "Administrador",
-                "email": ADMIN_EMAIL,
-                "permissions": ["scheduling", "flows", "settings", "users"],
-                "is_super_admin": True,
-            }
-        }
+    try:
+        data = resp.json()
+    except ValueError:
+        logger.error(f"Resposta nao-JSON da plataforma (status {resp.status_code})")
+        raise HTTPException(status_code=502, detail="Resposta invalida do servico de autenticacao")
 
-    # 2. Usuario cadastrado no MongoDB
-    user = await _user_service.authenticate(body.email, body.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Email ou senha invalidos")
-
-    tokens = login_response(response, sub=user["email"], email=user["email"], set_cookies=False)
-    return {
-        **tokens,
-        "user": {
-            "name": user["name"],
-            "email": user["email"],
-            "permissions": user["permissions"],
-            "is_super_admin": False,
-        }
-    }
+    return JSONResponse(status_code=resp.status_code, content=data)

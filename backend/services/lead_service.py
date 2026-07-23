@@ -18,9 +18,18 @@ class LeadService:
         self._genesis = GenesisService()
 
     async def create(self, data: dict) -> dict:
-        """Cria ou atualiza lead. Se ja existe com mesmo email+flow, atualiza."""
+        """Cria ou atualiza lead. Se ja existe com mesmo email+flow, atualiza.
+
+        Rota publica: o tenant SAI do documento do flow — nunca do cliente.
+        """
+        flow_doc = await self._flow_repo.find_by_id(data["flow_id"])
+        if not flow_doc:
+            raise ValueError("Flow nao encontrado")
+        tenant_id = flow_doc.get("tenant_id")
+        data = {**data, "tenant_id": tenant_id}
+
         existing = await self._repo.find_by_email_and_flow(
-            data["client_email"], data["flow_slug"]
+            data["client_email"], data["flow_slug"], tenant_id=tenant_id
         )
 
         if existing:
