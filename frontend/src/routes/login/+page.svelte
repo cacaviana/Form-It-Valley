@@ -26,9 +26,35 @@
       }
 
       const data = await res.json();
+
+      // Resposta agora vem da Petra Suite: access_token, refresh_token,
+      // user {id,name,email}, tenant {id,slug,is_master}, products [{slug,...}]
+      const products: string[] = (data.products || []).map((p: any) =>
+        typeof p === 'string' ? p : p.slug
+      );
+      const isMaster = data.tenant?.is_master === true;
+
+      if (products.length > 0 && !products.includes('calenda') && !isMaster) {
+        error = 'Seu tenant nao assina o produto Calenda (Forms). Fale com o administrador.';
+        loading = false;
+        return;
+      }
+
+      // Compat com o guard do admin: quem assina Calenda acessa todas as
+      // paginas do Forms (permissoes finas vem do JWT no backend).
+      const sessionUser = {
+        ...data.user,
+        tenant: data.tenant ?? null,
+        products,
+        permissions: Array.isArray(data.user?.permissions)
+          ? data.user.permissions
+          : ['scheduling', 'flows', 'settings', 'users'],
+        is_super_admin: isMaster || data.user?.is_super_admin === true
+      };
+
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(sessionUser));
       goto('/admin');
     } catch (e) {
       error = 'Erro ao conectar com o servidor';
